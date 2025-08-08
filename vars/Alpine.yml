@@ -1,0 +1,14 @@
+---
+python_dep_pkgs:
+  - tar
+  - unzip
+  - curl
+  - build-base
+  - py3-pip
+  - openssl-dev
+  - libffi-dev
+  - sqlite-dev
+  - zlib-dev
+
+python_distro_pkgs:
+  - python3

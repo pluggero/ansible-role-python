@@ -1,0 +1,17 @@
+---
+- name: Ensure we are using apk
+  ansible.builtin.fail:
+    msg: "This role only supports {{ ansible_os_family }} systems that use apk as a package manager."
+  when: ansible_pkg_mgr != "apk"
+
+- name: Install Python via apk
+  block:
+    - name: Ensure Python is installed
+      community.general.apk:
+        name: "{{ package }}"
+        state: present
+        no_cache: true
+      loop: "{{ python_distro_pkgs }}"
+      loop_control:
+        loop_var: package
+      become: true

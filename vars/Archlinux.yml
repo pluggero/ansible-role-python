@@ -1,0 +1,11 @@
+---
+python_dep_pkgs:
+  - tar
+  - unzip
+  - curl
+  - base-devel
+  - cmake
+  - python-pip
+
+python_distro_pkgs:
+  - python

@@ -1,0 +1,28 @@
+---
+- name: Ensure we are using pacman
+  ansible.builtin.fail:
+    msg: "This role only supports {{ ansible_os_family }} systems that use pacman as a package manager."
+  when: ansible_pkg_mgr != "pacman"
+
+- name: Checks Python version in package manager
+  block:
+    - name: Update pacman cache
+      community.general.pacman:
+        update_cache: true
+      become: true
+
+    - name: Get Python version from package manager
+      ansible.builtin.command:
+        cmd: "pacman -Si {{ python_distro_pkgs[0] }}"
+      changed_when: false
+      failed_when: false
+      ignore_errors: true
+      register: python_pkg_mgr_version_cmd
+
+    - name: Extract only the version into a variable
+      ansible.builtin.set_fact:
+        python_pkg_mgr_version: "{{ (python_pkg_mgr_version_cmd.stdout | regex_search('Version.*?([\\d\\.]{3,})', '\\1', multiline=True))[0] }}"
+
+    - name: Debug Python version from package manager
+      ansible.builtin.debug:
+        var: python_pkg_mgr_version

@@ -1,0 +1,106 @@
+---
+- name: Install Python from source
+  block:
+    - name: Import installed Python version check
+      ansible.builtin.include_tasks: noauto_check_installed_version.yml
+      when: python_installed_version is not defined
+
+    - name: Force install if the version numbers do not match
+      ansible.builtin.set_fact:
+        python_force_install: true
+      when:
+        - python_installed_version is defined
+        - python_installed_version != python_version
+
+    - name: Install Python from source
+      when: python_installed_version is not defined or python_force_install
+      block:
+        - name: Uninstall current Python installation
+          ansible.builtin.include_tasks: noauto_uninstall.yml
+          when: python_installed_version is defined and python_installed_version != ""
+
+        - name: Download Python source
+          ansible.builtin.get_url:
+            url: "{{ python_download_url }}"
+            dest: "{{ python_download_dir }}/{{ python_archive_name }}"
+            mode: "0755"
+            owner: root
+            group: root
+          become: true
+
+        - name: Ensure Python installation folder exists
+          ansible.builtin.file:
+            path: "{{ python_install_path }}"
+            state: directory
+            mode: "0755"
+            owner: root
+            group: root
+          become: true
+
+        - name: Extract archive
+          ansible.builtin.unarchive:
+            src: "{{ python_download_dir }}/{{ python_archive_name }}"
+            dest: "{{ python_install_path }}"
+            remote_src: true
+            extra_opts: ["--strip-components=1"]
+            creates: "{{ python_install_path }}/configure"
+          become: true
+
+        - name: Clean previous build attempts
+          ansible.builtin.command:
+            cmd: "make clean"
+            chdir: "{{ python_install_path }}"
+          become: true
+          ignore_errors: true
+          when: (python_install_path + '/Makefile') is file
+
+        - name: Configure Python build (with Profile-Guided Optimization)
+          ansible.builtin.command:
+            cmd: "./configure --prefix={{ python_install_path }} \
+              --enable-optimizations \
+              --with-ensurepip=install \
+              --enable-loadable-sqlite-extensions"
+            chdir: "{{ python_install_path }}"
+            creates: "{{ python_install_path }}/Makefile"
+          become: true
+          when: not ansible_facts['distribution'] | lower == 'alpine'
+
+        - name: Configure Python build (without Profile-Guided Optimization)
+          ansible.builtin.command:
+            cmd: "./configure --prefix={{ python_install_path }} \
+              --with-ensurepip=install \
+              --enable-loadable-sqlite-extensions"
+            chdir: "{{ python_install_path }}"
+            creates: "{{ python_install_path }}/Makefile"
+          become: true
+          when: ansible_facts['distribution'] | lower == 'alpine'
+
+        - name: Build Python
+          ansible.builtin.command:
+            cmd: "make -j{{ ansible_processor_vcpus | default(2) }}"
+            chdir: "{{ python_install_path }}"
+          become: true
+
+        - name: Install Python
+          ansible.builtin.command:
+            cmd: "make altinstall"
+            chdir: "{{ python_install_path }}"
+            creates: "{{ python_install_path }}/bin/python{{ python_version | regex_replace('^([0-9]+\\.[0-9]+).*', '\\1') }}"
+          become: true
+
+        - name: Create Python symlink
+          ansible.builtin.file:
+            src: "{{ python_install_path }}/bin/python{{ python_version | regex_replace('^([0-9]+\\.[0-9]+).*', '\\1') }}"
+            dest: "/usr/local/bin/python3"
+            state: link
+            force: true
+            mode: "0755"
+            owner: root
+            group: root
+          become: true
+
+        - name: Remove source archive
+          ansible.builtin.file:
+            path: "{{ python_download_dir }}/{{ python_archive_name }}"
+            state: absent
+          become: true

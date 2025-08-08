@@ -1,0 +1,43 @@
+---
+- name: Install Python OS-specifically via package
+  block:
+    - name: Import installed Python version check
+      ansible.builtin.include_tasks: noauto_check_installed_version.yml
+      when: python_installed_version is not defined
+
+    - name: Check Python pkg mgr version
+      ansible.builtin.include_tasks: "{{ task_file }}"
+      with_first_found:
+        - "noauto_check_pkg_mgr_version_{{ ansible_distribution }}-{{ ansible_distribution_major_version }}.yml"
+        - "noauto_check_pkg_mgr_version_{{ ansible_os_family }}-{{ ansible_distribution_major_version }}.yml"
+        - "noauto_check_pkg_mgr_version_{{ ansible_distribution }}.yml"
+        - "noauto_check_pkg_mgr_version_{{ ansible_os_family }}.yml"
+        - "noauto_check_pkg_mgr_version_{{ ansible_lsb.id }}.yml"
+      loop_control:
+        loop_var: task_file
+
+    - name: Force install if the version numbers do not match
+      ansible.builtin.set_fact:
+        python_force_install: true
+      when:
+        - python_installed_version is defined
+        - python_pkg_mgr_version is defined
+        - python_installed_version != python_version
+
+    - name: Install Python package
+      when: python_installed_version is not defined or python_force_install
+      block:
+        - name: Uninstall current Python installation
+          ansible.builtin.include_tasks: noauto_uninstall.yml
+          when: python_installed_version is defined and python_installed_version != ""
+
+        - name: Install Python OS-specifically via package
+          ansible.builtin.include_tasks: "{{ task_file }}"
+          with_first_found:
+            - "noauto_install_{{ ansible_distribution }}-{{ ansible_distribution_major_version }}.yml"
+            - "noauto_install_{{ ansible_os_family }}-{{ ansible_distribution_major_version }}.yml"
+            - "noauto_install_{{ ansible_distribution }}.yml"
+            - "noauto_install_{{ ansible_os_family }}.yml"
+            - "noauto_install_{{ ansible_lsb.id }}.yml"
+          loop_control:
+            loop_var: task_file

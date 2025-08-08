@@ -1,0 +1,8 @@
+---
+- name: Uninstall current installation of Python
+  block:
+    # Most of the distros break when trying to uninstall Python from the package manager,
+    # so we will only uninstall from source.
+
+    - name: Uninstall Python from source
+      ansible.builtin.include_tasks: noauto_uninstall_source.yml

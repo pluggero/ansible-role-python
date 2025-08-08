@@ -1,0 +1,18 @@
+---
+- name: Check installed Python version
+  block:
+    - name: Get installed Python version
+      ansible.builtin.command:
+        cmd: "python3 --version"
+      ignore_errors: true
+      changed_when: false
+      failed_when: false
+      register: python_installed_version_cmd
+
+    - name: Extract only the version into a variable
+      ansible.builtin.set_fact:
+        python_installed_version: "{{ (python_installed_version_cmd.stdout | regex_search('Python ([\\d.]+)', '\\1'))[0] | default('') }}"
+
+    - name: Debug installed Python version
+      ansible.builtin.debug:
+        var: python_installed_version

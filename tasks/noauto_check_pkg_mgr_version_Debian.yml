@@ -1,0 +1,29 @@
+---
+- name: Ensure we are using apt
+  ansible.builtin.fail:
+    msg: "This role only supports {{ ansible_os_family }} systems that use apt as a package manager."
+  when: ansible_pkg_mgr != "apt"
+
+- name: Install Python dependencies via apt
+  block:
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+      become: true
+
+    - name: Get Python version from package manager
+      ansible.builtin.command:
+        cmd: "apt show {{ python_distro_pkgs[0] }}"
+      changed_when: false
+      failed_when: false
+      ignore_errors: true
+      register: python_pkg_mgr_version_cmd
+
+    - name: Extract only the version into a variable
+      ansible.builtin.set_fact:
+        python_pkg_mgr_version: "{{ (python_pkg_mgr_version_cmd.stdout | regex_search('Version:.*?([\\d\\.]{3,})', '\\1', multiline=True))[0] }}"
+
+    - name: Debug Python version from package manager
+      ansible.builtin.debug:
+        var: python_pkg_mgr_version

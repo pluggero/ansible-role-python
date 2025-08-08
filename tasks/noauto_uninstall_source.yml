@@ -1,0 +1,24 @@
+---
+- name: Uninstall Python from source
+  block:
+    - name: Find existing Python folder in {{ python_install_dir }}
+      ansible.builtin.find:
+        paths: "{{ python_install_dir }}"
+        patterns: "python-*"
+        file_type: directory
+      register: python_install_folder
+
+    - name: Remove existing Python installation folder
+      ansible.builtin.file:
+        path: "{{ folder.path }}"
+        state: absent
+      loop: "{{ python_install_folder.files }}"
+      loop_control:
+        loop_var: folder
+      become: true
+
+    - name: Remove Python symlink
+      ansible.builtin.file:
+        path: "/usr/local/bin/python3"
+        state: absent
+      become: true
