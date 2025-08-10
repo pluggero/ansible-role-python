@@ -41,6 +41,7 @@ Each tool entry supports:
 - `package`: The Python package name (required)
 - `version`: Version to install, use "latest" for the newest version (required)
 - `executables`: List of command-line executables to create wrapper scripts for (required)
+- `tool_dependencies`: OS-specific system packages required by the tool (optional)
 
 Example:
 
@@ -49,6 +50,8 @@ python_tools:
   - package: "frida-tools"
     version: "latest"
     executables: ["frida", "frida-ps", "frida-trace"]
+    tool_dependencies:
+      Alpine: ["npm"]
   - package: "black"
     version: "22.3.0"
     executables: ["black"]
