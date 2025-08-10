@@ -20,22 +20,13 @@
   "customManagers": [
     {
       "customType": "regex",
-      "managerFilePatterns": [
-        "/^defaults/main\\.yml$/"
-      ],
+      "fileMatch": ["^defaults/main\\.yml$"],
       "matchStrings": [
         "python_version:\\s+\"(?<currentValue>[\\d\\.]+)\""
       ],
-      "datasourceTemplate": "custom.python-version",
-      "depNameTemplate": "python-version",
-      "versioningTemplate": "semver",
-      "extractVersionTemplate": "Latest Python 3 Release - Python (?<version>\\d+\\.\\d+\\.\\d+)"
+      "datasourceTemplate": "github-tags",
+      "depNameTemplate": "python/cpython",
+      "versioningTemplate": "semver"
     }
-  ],
-  "customDatasources": {
-    "python-version": {
-      "defaultRegistryUrlTemplate": "https://www.python.org/downloads/source/",
-      "format": "html"
-    }
-  }
+  ]
 }
