@@ -37,23 +37,23 @@
 
     - name: Check wrapper script exists
       ansible.builtin.stat:
-        path: "{{ ansible_env.HOME }}/.local/bin/black"
-      register: python_black_wrapper
+        path: "{{ ansible_env.HOME }}/.local/bin/frida"
+      register: python_frida_wrapper
 
-    - name: Assert black wrapper exists and is executable
+    - name: Assert frida wrapper exists and is executable
       ansible.builtin.assert:
         that:
-          - python_black_wrapper.stat.exists
-          - python_black_wrapper.stat.executable
+          - python_frida_wrapper.stat.exists
+          - python_frida_wrapper.stat.executable
 
-    - name: Test black command is accessible via PATH
+    - name: Test frida command is accessible via PATH
       ansible.builtin.shell: |
         . /etc/profile.d/python_path.sh
-        which black
-      register: python_black_which
+        which frida
+      register: python_frida_which
       changed_when: false
 
-    - name: Assert black is found in PATH
+    - name: Assert frida is found in PATH
       ansible.builtin.assert:
         that:
-          - python_black_which.stdout is match(".*/.local/bin/black")
+          - python_frida_which.stdout is match(".*/.local/bin/frida")

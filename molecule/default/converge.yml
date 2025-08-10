@@ -5,9 +5,11 @@
   vars:
     ansible_user: "root"
     python_tools:
-      - package: "black"
+      - package: "frida-tools"
         version: "latest"
-        executables: ["black", "blackd"]
+        executables: ["frida", "frida-ps", "frida-trace"]
+        tool_dependencies:
+          Alpine: ["npm"]
 
   pre_tasks:
     - name: Update apt cache

@@ -31,6 +31,24 @@
         group: root
       become: true
 
+- name: Install tool dependencies
+  block:
+    - name: Collect tool dependencies for current OS
+      ansible.builtin.set_fact:
+        python_tool_dep_pkgs: "{{ python_tools | selectattr('tool_dependencies', 'defined') | map(attribute='tool_dependencies') | map('dict2items') | flatten | selectattr('key', 'equalto', ansible_os_family) | map(attribute='value') | flatten | unique | list }}"
+
+    - name: Install OS-specific tool dependencies
+      ansible.builtin.include_tasks: "{{ task_file }}"
+      with_first_found:
+        - "noauto_install_tool_dep_{{ ansible_distribution }}-{{ ansible_distribution_major_version }}.yml"
+        - "noauto_install_tool_dep_{{ ansible_os_family }}-{{ ansible_distribution_major_version }}.yml"
+        - "noauto_install_tool_dep_{{ ansible_distribution }}.yml"
+        - "noauto_install_tool_dep_{{ ansible_os_family }}.yml"
+        - "noauto_install_tool_dep_{{ ansible_lsb.id }}.yml"
+      loop_control:
+        loop_var: task_file
+      when: python_tool_dep_pkgs is defined and python_tool_dep_pkgs | length > 0
+
 - name: Install Python packages
   block:
     - name: Check if version file exists
