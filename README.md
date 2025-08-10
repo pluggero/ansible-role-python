@@ -30,6 +30,30 @@ The following methods are available:
   - **NOTE**: This method installs the latest version available in the package manager and not the version defined in `python_version`.
 - `dynamic`: Installs Python from package manager if available in the correct version, otherwise installs from source
 
+```yaml
+python_tools: []
+```
+
+Optional list of Python tools/packages to install in isolated virtual environments. Each tool is installed in its own venv and made available via wrapper scripts in `~/.local/bin`. Tools are automatically added to the system PATH for all users.
+
+Each tool entry supports:
+
+- `package`: The Python package name (required)
+- `version`: Version to install, use "latest" for the newest version (required)
+- `executables`: List of command-line executables to create wrapper scripts for (required)
+
+Example:
+
+```yaml
+python_tools:
+  - package: "frida-tools"
+    version: "latest"
+    executables: ["frida", "frida-ps", "frida-trace"]
+  - package: "black"
+    version: "22.3.0"
+    executables: ["black"]
+```
+
 ## Dependencies
 
 None.
@@ -49,4 +73,3 @@ MIT / BSD
 ## Author Information
 
 This role was created in 2025 by Robin Plugge.
-

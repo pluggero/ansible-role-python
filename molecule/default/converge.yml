@@ -4,6 +4,10 @@
 
   vars:
     ansible_user: "root"
+    python_tools:
+      - package: "black"
+        version: "latest"
+        executables: ["black", "blackd"]
 
   pre_tasks:
     - name: Update apt cache

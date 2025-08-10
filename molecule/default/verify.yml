@@ -1,7 +1,7 @@
 ---
 - name: Verify
   hosts: all
-  gather_facts: false
+  gather_facts: true
   vars_files:
     - ../../defaults/main.yml
 
@@ -13,3 +13,47 @@
       ansible.builtin.assert:
         that:
           - "python_installed_version == python_version"
+
+    - name: Check Python tool install directory exists
+      ansible.builtin.stat:
+        path: "{{ ansible_env.HOME }}/.local/bin"
+      register: python_tool_dir
+
+    - name: Assert Python tool directory exists
+      ansible.builtin.assert:
+        that:
+          - python_tool_dir.stat.exists
+          - python_tool_dir.stat.isdir
+
+    - name: Check PATH profile script exists
+      ansible.builtin.stat:
+        path: "/etc/profile.d/python_path.sh"
+      register: python_path_script
+
+    - name: Assert PATH profile script exists
+      ansible.builtin.assert:
+        that:
+          - python_path_script.stat.exists
+
+    - name: Check wrapper script exists
+      ansible.builtin.stat:
+        path: "{{ ansible_env.HOME }}/.local/bin/black"
+      register: python_black_wrapper
+
+    - name: Assert black wrapper exists and is executable
+      ansible.builtin.assert:
+        that:
+          - python_black_wrapper.stat.exists
+          - python_black_wrapper.stat.executable
+
+    - name: Test black command is accessible via PATH
+      ansible.builtin.shell: |
+        . /etc/profile.d/python_path.sh
+        which black
+      register: python_black_which
+      changed_when: false
+
+    - name: Assert black is found in PATH
+      ansible.builtin.assert:
+        that:
+          - python_black_which.stdout is match(".*/.local/bin/black")
