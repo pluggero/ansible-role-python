@@ -29,7 +29,7 @@
       "datasourceTemplate": "custom.python-version",
       "depNameTemplate": "python-version",
       "versioningTemplate": "semver",
-      "extractVersionTemplate": "Latest Python 3 Release - Python (?<version>\\d+\\.\\d+\\.\\d+)/$"
+      "extractVersionTemplate": "Latest Python 3 Release - Python (?<version>\\d+\\.\\d+\\.\\d+)"
     }
   ],
   "customDatasources": {
