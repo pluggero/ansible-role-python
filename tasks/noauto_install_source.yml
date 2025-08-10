@@ -51,7 +51,8 @@
             cmd: "make clean"
             chdir: "{{ python_install_path }}"
           become: true
-          ignore_errors: true
+          failed_when: false
+          changed_when: false
           when: (python_install_path + '/Makefile') is file
 
         - name: Configure Python build (with Profile-Guided Optimization)
@@ -79,6 +80,7 @@
           ansible.builtin.command:
             cmd: "make -j{{ ansible_processor_vcpus | default(2) }}"
             chdir: "{{ python_install_path }}"
+            creates: "{{ python_install_path }}/python"
           become: true
 
         - name: Install Python
