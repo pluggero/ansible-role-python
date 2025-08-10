@@ -9,3 +9,12 @@ python_download_dir: "/tmp"
 
 python_install_dir: "/opt"
 python_install_path: "{{ python_install_dir }}/python-{{ python_version }}"
+python_tool_install_dir: ".local/bin"
+python_tool_install_path: "{{ ansible_env.HOME }}/{{ python_tool_install_dir }}"
+python_tool_venv_dir: "{{ ansible_env.HOME }}/.local/venvs"
+python_tool_version_file_path: "{{ python_tool_install_path }}/.versions"
+
+python_tools:
+  # - package: "black"
+  #   version: "latest"
+  #   executables: ["black", "blackd"]
