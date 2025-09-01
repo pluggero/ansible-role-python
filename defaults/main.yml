@@ -1,5 +1,5 @@
 ---
-python_version: "3.13.6"
+python_version: "3.13.7"
 python_install_method: "dynamic"
 python_force_install: false
 
