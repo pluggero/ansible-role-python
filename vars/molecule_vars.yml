@@ -1,0 +1,7 @@
+---
+python_tools:
+  - package: "frida-tools"
+    version: "latest"
+    executables: ["frida", "frida-ps", "frida-trace"]
+    tool_dependencies:
+      Alpine: ["npm", "git", "make", "gcc", "musl-dev"]
