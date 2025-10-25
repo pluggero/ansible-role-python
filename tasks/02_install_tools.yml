@@ -40,11 +40,11 @@
     - name: Install OS-specific tool dependencies
       ansible.builtin.include_tasks: "{{ task_file }}"
       with_first_found:
-        - "noauto_install_tool_dep_{{ ansible_distribution }}-{{ ansible_distribution_major_version }}.yml"
-        - "noauto_install_tool_dep_{{ ansible_os_family }}-{{ ansible_distribution_major_version }}.yml"
-        - "noauto_install_tool_dep_{{ ansible_distribution }}.yml"
-        - "noauto_install_tool_dep_{{ ansible_os_family }}.yml"
-        - "noauto_install_tool_dep_{{ ansible_lsb.id }}.yml"
+        - "{{ role_path }}/tasks/noauto_install_tool_dep_{{ ansible_distribution }}-{{ ansible_distribution_major_version }}.yml"
+        - "{{ role_path }}/tasks/noauto_install_tool_dep_{{ ansible_os_family }}-{{ ansible_distribution_major_version }}.yml"
+        - "{{ role_path }}/tasks/noauto_install_tool_dep_{{ ansible_distribution }}.yml"
+        - "{{ role_path }}/tasks/noauto_install_tool_dep_{{ ansible_os_family }}.yml"
+        - "{{ role_path }}/tasks/noauto_install_tool_dep_{{ ansible_lsb.id }}.yml"
       loop_control:
         loop_var: task_file
       when: python_tool_dep_pkgs is defined and python_tool_dep_pkgs | length > 0
