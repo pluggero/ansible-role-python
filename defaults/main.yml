@@ -17,6 +17,16 @@ python_tool_version_file_path: "{{ python_tool_install_path }}/.versions"
 python_tools: []
   # - package: "frida-tools"
   #   version: "latest"
+  #   venv_name: "frida-tools"  # Optional: defaults to package name. Use same venv_name to install multiple packages in one venv
   #   executables: ["frida", "frida-ps", "frida-trace"]
   #   tool_dependencies:
   #     Alpine: ["npm", "git", "make", "gcc", "musl-dev"]
+  # Example: Multiple packages in one venv
+  # - package: "objection"
+  #   version: "1.11.0"
+  #   venv_name: "mobile-security"
+  #   executables: ["objection"]
+  # - package: "frida-tools"
+  #   version: "13.7.1"
+  #   venv_name: "mobile-security"
+  #   executables: ["frida", "frida-ps", "frida-trace"]

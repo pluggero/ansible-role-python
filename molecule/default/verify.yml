@@ -62,3 +62,31 @@
       ansible.builtin.assert:
         that:
           - python_frida_which.stdout is match(".*/" + python_tool_install_dir + "/frida")
+
+    - name: Verify critical Python modules are available
+      ansible.builtin.command:
+        cmd: |
+          python3 -c "
+          import sys
+          modules = ['ssl', 'sqlite3', 'zlib', 'bz2', 'lzma', 'readline', '_ctypes', '_gdbm', '_curses']
+          failed = []
+          for module in modules:
+              try:
+                  __import__(module)
+              except ImportError as e:
+                  failed.append(f'{module}: {str(e)}')
+          if failed:
+              print('FAILED_MODULES=' + ','.join(failed))
+              sys.exit(1)
+          print('ALL_MODULES_OK')
+          "
+      register: python_module_check
+      changed_when: false
+
+    - name: Assert all critical Python modules are available
+      ansible.builtin.assert:
+        that:
+          - python_module_check.rc == 0
+          - "'ALL_MODULES_OK' in python_module_check.stdout"
+        fail_msg: "Python modules missing or failed to import: {{ python_module_check.stdout }}"
+        success_msg: "All critical Python modules are available"

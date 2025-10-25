@@ -5,6 +5,15 @@ python_dep_pkgs:
   - curl
   - base-devel
   - cmake
+  - openssl
+  - libffi
+  - sqlite
+  - readline
+  - bzip2
+  - xz
+  - gdbm
+  - ncurses
+  - zlib
   - python-pip
 
 python_distro_pkgs:

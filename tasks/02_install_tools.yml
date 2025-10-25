@@ -66,43 +66,69 @@
       ansible.builtin.set_fact:
         python_tool_installed_versions: "{{ (python_tool_version_file_content.content | b64decode | from_json) if python_tool_file.stat.exists else {} }}"
 
-    - name: Create tool-specific venv directories
+    - name: Normalize tools with venv_name defaults
+      ansible.builtin.set_fact:
+        python_tools_normalized: >-
+          {%- set normalized = [] -%}
+          {%- for tool in python_tools -%}
+            {%- set tool_with_venv = tool | combine({'venv_name': tool.venv_name | default(tool.package)}) -%}
+            {%- set _ = normalized.append(tool_with_venv) -%}
+          {%- endfor -%}
+          {{ normalized }}
+
+    - name: Group tools by venv_name
+      ansible.builtin.set_fact:
+        python_tools_by_venv: "{{ python_tools_normalized | groupby('venv_name') | items2dict(key_name=0, value_name=1) }}"
+
+    - name: Determine which venvs need updates
+      ansible.builtin.set_fact:
+        python_venvs_to_update: >-
+          {%- set venvs_to_update = [] -%}
+          {%- for venv_name, tools in python_tools_by_venv.items() -%}
+            {%- for tool in tools -%}
+              {%- set version_key = tool.package + '@' + tool.venv_name -%}
+              {%- if version_key not in python_tool_installed_versions or python_tool_installed_versions[version_key] != tool.version -%}
+                {%- if venv_name not in venvs_to_update -%}
+                  {%- set _ = venvs_to_update.append(venv_name) -%}
+                {%- endif -%}
+              {%- endif -%}
+            {%- endfor -%}
+          {%- endfor -%}
+          {{ venvs_to_update }}
+
+    - name: Create venv directories
       ansible.builtin.file:
-        path: "{{ python_tool_venv_dir }}/{{ tool.package }}"
+        path: "{{ python_tool_venv_dir }}/{{ venv_name }}"
         state: directory
         mode: "0755"
         owner: "{{ ansible_user }}"
         group: "{{ ansible_user }}"
-      loop: "{{ python_tools }}"
+      loop: "{{ python_venvs_to_update }}"
       loop_control:
-        loop_var: tool
-      when: >
-        tool.package not in python_tool_installed_versions or
-        python_tool_installed_versions[tool.package] != tool.version
+        loop_var: venv_name
 
-    - name: Create virtual environments for tools
+    - name: Create virtual environments
       ansible.builtin.command:
-        cmd: "python3 -m venv {{ python_tool_venv_dir }}/{{ tool.package }}/venv"
-        creates: "{{ python_tool_venv_dir }}/{{ tool.package }}/bin/python"
-      loop: "{{ python_tools }}"
+        cmd: "python3 -m venv {{ python_tool_venv_dir }}/{{ venv_name }}/venv"
+        creates: "{{ python_tool_venv_dir }}/{{ venv_name }}/venv/bin/python"
+      loop: "{{ python_venvs_to_update }}"
       loop_control:
-        loop_var: tool
-      when: >
-        tool.package not in python_tool_installed_versions or
-        python_tool_installed_versions[tool.package] != tool.version
+        loop_var: venv_name
 
-    - name: Install Python packages in their venvs
+    - name: Install all packages for each venv
       ansible.builtin.pip:
-        name: "{{ tool.package }}{{ '==' + tool.version if tool.version != 'latest' else '' }}"
-        state: "{{ 'latest' if tool.version == 'latest' else 'present' }}"
-        virtualenv: "{{ python_tool_venv_dir }}/{{ tool.package }}/venv"
-      register: python_tool_install_result
-      loop: "{{ python_tools }}"
+        name: >-
+          {%- set packages = [] -%}
+          {%- for tool in python_tools_by_venv[venv_name] -%}
+            {%- set pkg_spec = tool.package + ('==' + tool.version if tool.version != 'latest' else '') -%}
+            {%- set _ = packages.append(pkg_spec) -%}
+          {%- endfor -%}
+          {{ packages }}
+        state: present
+        virtualenv: "{{ python_tool_venv_dir }}/{{ venv_name }}/venv"
+      loop: "{{ python_venvs_to_update }}"
       loop_control:
-        loop_var: tool
-      when: >
-        tool.package not in python_tool_installed_versions or
-        python_tool_installed_versions[tool.package] != tool.version
+        loop_var: venv_name
 
     - name: Create wrapper scripts for tool binaries
       ansible.builtin.template:
@@ -111,25 +137,19 @@
         mode: "0755"
         owner: "{{ ansible_user }}"
         group: "{{ ansible_user }}"
-      loop: "{{ python_tools | subelements('executables') }}"
+      loop: "{{ python_tools_normalized | subelements('executables') }}"
       loop_control:
         loop_var: tool_executable
       vars:
         tool: "{{ tool_executable[0] }}"
         executable: "{{ tool_executable[1] }}"
-      when: >
-        tool.package not in python_tool_installed_versions or
-        python_tool_installed_versions[tool.package] != tool.version
 
     - name: Update installed versions
       ansible.builtin.set_fact:
-        python_tool_installed_versions: "{{ python_tool_installed_versions | combine({tool.package: tool.version}) }}"
-      loop: "{{ python_tools }}"
+        python_tool_installed_versions: "{{ python_tool_installed_versions | combine({tool.package + '@' + tool.venv_name: tool.version}) }}"
+      loop: "{{ python_tools_normalized }}"
       loop_control:
         loop_var: tool
-      when: >
-        tool.package not in python_tool_installed_versions or
-        python_tool_installed_versions[tool.package] != tool.version
 
     - name: Update tool version file
       ansible.builtin.copy:

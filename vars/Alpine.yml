@@ -7,9 +7,13 @@ python_dep_pkgs:
   - openssl-dev
   - libffi-dev
   - sqlite-dev
+  - readline-dev
   - zlib-dev
+  - bzip2-dev
   - xz
   - xz-dev
+  - gdbm-dev
+  - ncurses-dev
   - py3-pip
 
 python_distro_pkgs:
