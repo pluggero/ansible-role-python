@@ -6,15 +6,16 @@
     - ../../vars/molecule_vars.yml
 
   vars:
-    ansible_user: "root"
+    ansible_user: ansible
+    ansible_become_password: ansible
 
   pre_tasks:
     - name: Update apt cache
       ansible.builtin.apt:
         update_cache: true
         cache_valid_time: 3600
-      become: true
       when: ansible_os_family == 'Debian'
+      become: true
 
   roles:
     - role: pluggero.python

@@ -2,8 +2,13 @@
 - name: Verify
   hosts: all
   gather_facts: true
+
   vars_files:
     - ../../defaults/main.yml
+
+  vars:
+    ansible_user: ansible
+    ansible_become_password: ansible
 
   tasks:
     - name: Check installed version
@@ -16,7 +21,7 @@
 
     - name: Check Python tool install directory exists
       ansible.builtin.stat:
-        path: "{{ ansible_env.HOME }}/.local/bin"
+        path: "{{ python_tool_install_path }}"
       register: python_tool_dir
 
     - name: Assert Python tool directory exists
@@ -37,7 +42,7 @@
 
     - name: Check wrapper script exists
       ansible.builtin.stat:
-        path: "{{ ansible_env.HOME }}/.local/bin/frida"
+        path: "{{ python_tool_install_path }}/frida"
       register: python_frida_wrapper
 
     - name: Assert frida wrapper exists and is executable
@@ -56,4 +61,4 @@
     - name: Assert frida is found in PATH
       ansible.builtin.assert:
         that:
-          - python_frida_which.stdout is match(".*/.local/bin/frida")
+          - python_frida_which.stdout is match(".*/" + python_tool_install_dir + "/frida")
