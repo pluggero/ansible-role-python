@@ -2,5 +2,5 @@
 # Auto-generated wrapper script for {{ executable }} (from package: {{ tool.package }})
 # Activates venv and executes the tool with all arguments
 
-source "{{ python_tool_venv_dir }}/{{ tool.package }}/venv/bin/activate"
+source "{{ python_tool_venv_dir }}/{{ tool.venv_name | default(tool.package) }}/venv/bin/activate"
 exec {{ executable }} "$@"

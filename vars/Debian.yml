@@ -4,6 +4,15 @@ python_dep_pkgs:
   - unzip
   - curl
   - build-essential
+  - libssl-dev
+  - libffi-dev
+  - libsqlite3-dev
+  - libreadline-dev
+  - libbz2-dev
+  - liblzma-dev
+  - libgdbm-dev
+  - libncurses-dev
+  - zlib1g-dev
   - python3-pip
   - python3-venv
 

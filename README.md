@@ -41,6 +41,9 @@ Each tool entry supports:
 - `package`: The Python package name (required)
 - `version`: Version to install, use "latest" for the newest version (required)
 - `executables`: List of command-line executables to create wrapper scripts for (required)
+- `venv_name`: Name of the virtual environment to use (optional, defaults to package name)
+  - Multiple tools can share the same venv by using the same `venv_name`
+  - All packages with the same `venv_name` are installed together in a single pip command for proper dependency resolution
 - `tool_dependencies`: OS-specific system packages required by the tool (optional)
 
 Example:
@@ -56,6 +59,22 @@ python_tools:
     version: "22.3.0"
     executables: ["black"]
 ```
+
+Example with multiple packages in one venv:
+
+```yaml
+python_tools:
+  - package: "objection"
+    version: "1.11.0"
+    venv_name: "mobile-security"
+    executables: ["objection"]
+  - package: "frida-tools"
+    version: "13.7.1"
+    venv_name: "mobile-security"
+    executables: ["frida", "frida-ps", "frida-trace"]
+```
+
+In this example, both `objection==1.11.0` and `frida-tools==13.7.1` will be installed in the same virtual environment named "mobile-security" using a single `pip install objection==1.11.0 frida-tools==13.7.1` command, ensuring proper dependency resolution.
 
 ## Dependencies
 

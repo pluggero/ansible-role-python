@@ -1,7 +1,16 @@
 ---
 python_tools:
+  - package: "objection"
+    version: "1.11.0"
+    venv_name: "mobile-security"
+    executables: ["objection"]
   - package: "frida-tools"
     version: "latest"
+    venv_name: "mobile-security"
     executables: ["frida", "frida-ps", "frida-trace"]
     tool_dependencies:
       Alpine: ["npm", "git", "make", "gcc", "musl-dev"]
+  - package: "setuptools"
+    version: "80.8.0"
+    venv_name: "mobile-security"
+    executables: []
