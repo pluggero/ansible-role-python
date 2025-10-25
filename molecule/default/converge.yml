@@ -2,19 +2,17 @@
 - name: Converge
   hosts: all
 
+  vars_files:
+    - ../../vars/molecule_vars.yml
+
   vars:
     ansible_user: "root"
-    python_tools:
-      - package: "frida-tools"
-        version: "latest"
-        executables: ["frida", "frida-ps", "frida-trace"]
-        tool_dependencies:
-          Alpine: ["npm"]
 
   pre_tasks:
     - name: Update apt cache
       ansible.builtin.apt:
         update_cache: true
+        cache_valid_time: 3600
       become: true
       when: ansible_os_family == 'Debian'
 
