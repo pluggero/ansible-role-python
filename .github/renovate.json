@@ -34,10 +34,12 @@
     {
       "customType": "regex",
       "managerFilePatterns": [
-        "/^defaults/main\\.yml$/"
+        "/^defaults/main\\.yml$/",
+        "\\.github/workflows/.+\\.ya?ml$"
       ],
       "matchStrings": [
-        "python_version:\\s+\"(?<currentValue>[\\d\\.]+)\""
+        "python_version:\\s+\"(?<currentValue>[\\d\\.]+)\"",
+        "python-version:\\s+[\"'](?<currentValue>\\d+\\.\\d+)[\"']"
       ],
       "datasourceTemplate": "github-tags",
       "depNameTemplate": "python/cpython",
