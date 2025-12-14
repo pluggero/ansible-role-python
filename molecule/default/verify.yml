@@ -19,16 +19,28 @@
         that:
           - "python_installed_version == python_version"
 
-    - name: Check Python tool install directory exists
+    # User-scoped tools verification
+    - name: Check user Python tool install directory exists
       ansible.builtin.stat:
         path: "{{ python_tool_install_path }}"
-      register: python_tool_dir
+      register: python_user_tool_dir
 
-    - name: Assert Python tool directory exists
+    - name: Assert user Python tool directory exists
       ansible.builtin.assert:
         that:
-          - python_tool_dir.stat.exists
-          - python_tool_dir.stat.isdir
+          - python_user_tool_dir.stat.exists
+          - python_user_tool_dir.stat.isdir
+
+    - name: Check user venv directory exists (mobile-security)
+      ansible.builtin.stat:
+        path: "{{ python_tool_venv_dir }}/mobile-security"
+      register: python_user_venv_dir
+
+    - name: Assert user venv directory exists
+      ansible.builtin.assert:
+        that:
+          - python_user_venv_dir.stat.exists
+          - python_user_venv_dir.stat.isdir
 
     - name: Check PATH profile script exists
       ansible.builtin.stat:
@@ -40,16 +52,27 @@
         that:
           - python_path_script.stat.exists
 
-    - name: Check wrapper script exists
+    - name: Check user wrapper script exists (frida)
       ansible.builtin.stat:
         path: "{{ python_tool_install_path }}/frida"
-      register: python_frida_wrapper
+      register: python_user_frida_wrapper
 
-    - name: Assert frida wrapper exists and is executable
+    - name: Assert user frida wrapper exists and is executable
       ansible.builtin.assert:
         that:
-          - python_frida_wrapper.stat.exists
-          - python_frida_wrapper.stat.executable
+          - python_user_frida_wrapper.stat.exists
+          - python_user_frida_wrapper.stat.executable
+
+    - name: Check user wrapper script exists (objection)
+      ansible.builtin.stat:
+        path: "{{ python_tool_install_path }}/objection"
+      register: python_user_objection_wrapper
+
+    - name: Assert user objection wrapper exists and is executable
+      ansible.builtin.assert:
+        that:
+          - python_user_objection_wrapper.stat.exists
+          - python_user_objection_wrapper.stat.executable
 
     - name: Test frida command is accessible via PATH
       ansible.builtin.shell: |
@@ -62,6 +85,39 @@
       ansible.builtin.assert:
         that:
           - python_frida_which.stdout is match(".*/" + python_tool_install_dir + "/frida")
+
+    # System-scoped tools verification
+    - name: Check system venv directory exists (ansible-lint)
+      ansible.builtin.stat:
+        path: "{{ python_tool_system_venv_dir }}/ansible-lint"
+      register: python_system_venv_dir
+
+    - name: Assert system venv directory exists
+      ansible.builtin.assert:
+        that:
+          - python_system_venv_dir.stat.exists
+          - python_system_venv_dir.stat.isdir
+
+    - name: Check system wrapper script exists (ansible-lint)
+      ansible.builtin.stat:
+        path: "{{ python_tool_system_bin }}/ansible-lint"
+      register: python_system_ansible_lint_wrapper
+
+    - name: Assert system ansible-lint wrapper exists and is executable
+      ansible.builtin.assert:
+        that:
+          - python_system_ansible_lint_wrapper.stat.exists
+          - python_system_ansible_lint_wrapper.stat.executable
+
+    - name: Test ansible-lint is accessible in system PATH
+      ansible.builtin.command: which ansible-lint
+      register: ansible_lint_which
+      changed_when: false
+
+    - name: Assert ansible-lint is found in system PATH
+      ansible.builtin.assert:
+        that:
+          - ansible_lint_which.stdout == python_tool_system_bin + "/ansible-lint"
 
     - name: Verify critical Python modules are available
       ansible.builtin.command:

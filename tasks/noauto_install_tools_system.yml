@@ -1,0 +1,24 @@
+---
+# Install Python tools with system scope
+# These tools are installed in /opt/python-tools/venvs and wrapper scripts in /usr/local/bin
+
+- name: Ensure Python tool venv base directory exists (system)
+  ansible.builtin.file:
+    path: "{{ python_tool_system_venv_dir }}"
+    state: directory
+    mode: "0755"
+    owner: root
+    group: root
+  become: true
+
+- name: Install system-scoped tools using common logic
+  ansible.builtin.include_tasks: noauto_install_tools_common.yml
+  vars:
+    scope_tools: "{{ python_tools_system }}"
+    scope_venv_dir: "{{ python_tool_system_venv_dir }}"
+    scope_bin_dir: "{{ python_tool_system_bin }}"
+    scope_version_file: "{{ python_tool_system_version_file }}"
+    scope_owner: root
+    scope_group: root
+    scope_become: true
+    scope_name: "system"

@@ -1,16 +1,26 @@
 ---
 python_tools:
+  # User-scoped tools (shared venv)
   - package: "objection"
     version: "1.11.0"
     venv_name: "mobile-security"
+    install_scope: "user"
     executables: ["objection"]
   - package: "frida-tools"
     version: "latest"
     venv_name: "mobile-security"
+    install_scope: "user"
     executables: ["frida", "frida-ps", "frida-trace"]
     tool_dependencies:
       Alpine: ["npm", "git", "make", "gcc", "musl-dev"]
   - package: "setuptools"
     version: "80.8.0"
     venv_name: "mobile-security"
+    install_scope: "user"
     executables: []
+
+  # System-scoped tool (available to all users)
+  - package: "ansible-lint"
+    version: "latest"
+    install_scope: "system"
+    executables: ["ansible-lint"]
