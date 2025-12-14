@@ -34,47 +34,71 @@ The following methods are available:
 python_tools: []
 ```
 
-Optional list of Python tools/packages to install in isolated virtual environments. Each tool is installed in its own venv and made available via wrapper scripts in `~/.local/bin`. Tools are automatically added to the system PATH for all users.
+Optional list of Python tools/packages to install in isolated virtual environments. Each tool is installed in its own venv and made available via wrapper scripts.
 
 Each tool entry supports:
 
 - `package`: The Python package name (required)
 - `version`: Version to install, use "latest" for the newest version (required)
 - `executables`: List of command-line executables to create wrapper scripts for (required)
+- `install_scope`: Installation scope - "user" or "system" (optional, defaults to "user")
+  - **user**: Tools installed in `~/.local/venvs`, wrappers in `~/.local/bin` (per-user)
+  - **system**: Tools installed in `/opt/python-tools/venvs`, wrappers in `/usr/local/bin` (available to all users, requires sudo)
 - `venv_name`: Name of the virtual environment to use (optional, defaults to package name)
   - Multiple tools can share the same venv by using the same `venv_name`
   - All packages with the same `venv_name` are installed together in a single pip command for proper dependency resolution
 - `tool_dependencies`: OS-specific system packages required by the tool (optional)
 
-Example:
+**Example - Basic usage:**
 
 ```yaml
 python_tools:
+  - package: "black"
+    version: "22.3.0"
+    executables: ["black"]
   - package: "frida-tools"
     version: "latest"
     executables: ["frida", "frida-ps", "frida-trace"]
     tool_dependencies:
       Alpine: ["npm"]
-  - package: "black"
-    version: "22.3.0"
-    executables: ["black"]
 ```
 
-Example with multiple packages in one venv:
+**Example - System-wide installation:**
+
+```yaml
+python_tools:
+  # User-scoped tool (default)
+  - package: "black"
+    version: "latest"
+    install_scope: "user"
+    executables: ["black"]
+
+  # System-wide tool (available to all users)
+  - package: "ansible-lint"
+    version: "latest"
+    install_scope: "system"
+    executables: ["ansible-lint"]
+```
+
+**Example - Multiple packages in one venv:**
 
 ```yaml
 python_tools:
   - package: "objection"
     version: "1.11.0"
     venv_name: "mobile-security"
+    install_scope: "user"
     executables: ["objection"]
   - package: "frida-tools"
     version: "13.7.1"
     venv_name: "mobile-security"
+    install_scope: "user"
     executables: ["frida", "frida-ps", "frida-trace"]
 ```
 
 In this example, both `objection==1.11.0` and `frida-tools==13.7.1` will be installed in the same virtual environment named "mobile-security" using a single `pip install objection==1.11.0 frida-tools==13.7.1` command, ensuring proper dependency resolution.
+
+**Note:** System-scoped tools require the playbook to run with `become: true` (sudo privileges).
 
 ## Dependencies
 

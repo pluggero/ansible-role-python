@@ -1,0 +1,45 @@
+---
+# Install Python tools with user scope
+# These tools are installed in ~/.local/venvs and wrapper scripts in ~/.local/bin
+
+- name: Ensure Python tool install directory exists (user)
+  ansible.builtin.file:
+    path: "{{ python_tool_install_path }}"
+    state: directory
+    mode: "0755"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+
+- name: Ensure Python tool venv base directory exists (user)
+  ansible.builtin.file:
+    path: "{{ python_tool_venv_dir }}"
+    state: directory
+    mode: "0755"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+
+- name: Add Python tool path script in /etc/profile.d
+  ansible.builtin.copy:
+    dest: /etc/profile.d/python_path.sh
+    content: |
+      #!/bin/sh
+      # Add Python Tool bin to the PATH for all users
+      if [ -d "$HOME/{{ python_tool_install_dir }}" ]; then
+          PATH="$HOME/{{ python_tool_install_dir }}:$PATH"
+      fi
+    mode: "0644"
+    owner: root
+    group: root
+  become: true
+
+- name: Install user-scoped tools using common logic
+  ansible.builtin.include_tasks: noauto_install_tools_common.yml
+  vars:
+    scope_tools: "{{ python_tools_user }}"
+    scope_venv_dir: "{{ python_tool_venv_dir }}"
+    scope_bin_dir: "{{ python_tool_install_path }}"
+    scope_version_file: "{{ python_tool_version_file_path }}"
+    scope_owner: "{{ ansible_user }}"
+    scope_group: "{{ ansible_user }}"
+    scope_become: false
+    scope_name: "user"

@@ -1,0 +1,120 @@
+---
+# Common logic for installing Python tools (both user and system scope)
+# Requires the following variables to be set by the caller:
+#   - scope_tools: List of tools to install
+#   - scope_venv_dir: Directory for virtual environments
+#   - scope_bin_dir: Directory for wrapper scripts
+#   - scope_version_file: Path to version tracking file
+#   - scope_owner: Owner for created files/directories
+#   - scope_group: Group for created files/directories
+#   - scope_become: Boolean - whether to use privilege escalation
+#   - scope_name: String - "user" or "system" (for variable naming)
+
+- name: Check if version file exists - {{ scope_name }}
+  ansible.builtin.stat:
+    path: "{{ scope_version_file }}"
+  register: scope_version_file_stat
+  become: "{{ scope_become }}"
+
+- name: Read Python tool version file - {{ scope_name }}
+  ansible.builtin.slurp:
+    src: "{{ scope_version_file }}"
+  register: scope_version_file_content
+  when: scope_version_file_stat.stat.exists
+  become: "{{ scope_become }}"
+
+- name: Parse Python tool versions - {{ scope_name }}
+  ansible.builtin.set_fact:
+    "{{ scope_name }}_installed_versions": "{{ (scope_version_file_content.content | b64decode | from_json) if scope_version_file_stat.stat.exists else {} }}"
+
+- name: Group tools by venv_name - {{ scope_name }}
+  ansible.builtin.set_fact:
+    "{{ scope_name }}_tools_by_venv": "{{ scope_tools | groupby('venv_name') | items2dict(key_name=0, value_name=1) }}"
+
+- name: Determine which venvs need updates - {{ scope_name }}
+  ansible.builtin.set_fact:
+    "{{ scope_name }}_venvs_to_update": >-
+      {%- set venvs_to_update = [] -%}
+      {%- set installed_versions = vars[scope_name + '_installed_versions'] -%}
+      {%- set tools_by_venv = vars[scope_name + '_tools_by_venv'] -%}
+      {%- for venv_name, tools in tools_by_venv.items() -%}
+        {%- for tool in tools -%}
+          {%- set version_key = tool.package + '@' + tool.venv_name -%}
+          {%- if version_key not in installed_versions or installed_versions[version_key] != tool.version -%}
+            {%- if venv_name not in venvs_to_update -%}
+              {%- set _ = venvs_to_update.append(venv_name) -%}
+            {%- endif -%}
+          {%- endif -%}
+        {%- endfor -%}
+      {%- endfor -%}
+      {{ venvs_to_update }}
+
+- name: Create venv directories - {{ scope_name }}
+  ansible.builtin.file:
+    path: "{{ scope_venv_dir }}/{{ venv_name }}"
+    state: directory
+    mode: "0755"
+    owner: "{{ scope_owner }}"
+    group: "{{ scope_group }}"
+  loop: "{{ vars[scope_name + '_venvs_to_update'] }}"
+  loop_control:
+    loop_var: venv_name
+  become: "{{ scope_become }}"
+
+- name: Create virtual environments - {{ scope_name }}
+  ansible.builtin.command:
+    cmd: "python3 -m venv {{ scope_venv_dir }}/{{ venv_name }}/venv"
+    creates: "{{ scope_venv_dir }}/{{ venv_name }}/venv/bin/python"
+  loop: "{{ vars[scope_name + '_venvs_to_update'] }}"
+  loop_control:
+    loop_var: venv_name
+  become: "{{ scope_become }}"
+
+- name: Install all packages for each venv - {{ scope_name }}
+  ansible.builtin.pip:
+    name: >-
+      {%- set packages = [] -%}
+      {%- set tools_by_venv = vars[scope_name + '_tools_by_venv'] -%}
+      {%- for tool in tools_by_venv[venv_name] -%}
+        {%- set pkg_spec = tool.package + ('==' + tool.version if tool.version != 'latest' else '') -%}
+        {%- set _ = packages.append(pkg_spec) -%}
+      {%- endfor -%}
+      {{ packages }}
+    state: present
+    virtualenv: "{{ scope_venv_dir }}/{{ venv_name }}/venv"
+  loop: "{{ vars[scope_name + '_venvs_to_update'] }}"
+  loop_control:
+    loop_var: venv_name
+  become: "{{ scope_become }}"
+
+- name: Create wrapper scripts for tool binaries - {{ scope_name }}
+  ansible.builtin.template:
+    src: tool-wrapper.sh.j2
+    dest: "{{ scope_bin_dir }}/{{ executable }}"
+    mode: "0755"
+    owner: "{{ scope_owner }}"
+    group: "{{ scope_group }}"
+  loop: "{{ scope_tools | subelements('executables') }}"
+  loop_control:
+    loop_var: tool_executable
+  vars:
+    tool: "{{ tool_executable[0] }}"
+    executable: "{{ tool_executable[1] }}"
+    venv_path: "{{ scope_venv_dir }}/{{ tool.venv_name }}/venv"
+  become: "{{ scope_become }}"
+
+- name: Update installed versions - {{ scope_name }}
+  ansible.builtin.set_fact:
+    "{{ scope_name }}_installed_versions": "{{ vars[scope_name + '_installed_versions'] | combine({tool.package + '@' + tool.venv_name: tool.version}) }}"
+  loop: "{{ scope_tools }}"
+  loop_control:
+    loop_var: tool
+
+- name: Update tool version file - {{ scope_name }}
+  ansible.builtin.copy:
+    content: "{{ vars[scope_name + '_installed_versions'] | to_nice_json }}"
+    dest: "{{ scope_version_file }}"
+    mode: "0644"
+    owner: "{{ scope_owner }}"
+    group: "{{ scope_group }}"
+  become: "{{ scope_become }}"
