@@ -7,11 +7,15 @@
 - name: Install Python tool dependencies via apk
   when: python_tool_dep_pkgs is defined and python_tool_dep_pkgs | length > 0
   block:
+    - name: Update apk cache
+      community.general.apk:
+        update_cache: true
+      become: true
+
     - name: Ensure Python tool dependencies are installed
       community.general.apk:
         name: "{{ package }}"
         state: present
-        no_cache: true
       loop: "{{ python_tool_dep_pkgs }}"
       loop_control:
         loop_var: package
