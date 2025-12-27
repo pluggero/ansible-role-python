@@ -6,11 +6,15 @@
 
 - name: Install Python via apk
   block:
+    - name: Update apk cache
+      community.general.apk:
+        update_cache: true
+      become: true
+
     - name: Ensure Python is installed
       community.general.apk:
         name: "{{ package }}"
         state: present
-        no_cache: true
       loop: "{{ python_distro_pkgs }}"
       loop_control:
         loop_var: package
