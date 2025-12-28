@@ -9,7 +9,7 @@
     - name: Update apk cache
       community.general.apk:
         update_cache: true
-      changed_when: false # This is valid because we install packages without cache anyway
+      changed_when: false # Cache update is a preparatory operation, not a state change
       become: true
 
     - name: Get Python version from package manager
