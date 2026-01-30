@@ -21,12 +21,17 @@ python_tool_system_bin: "/usr/local/bin"
 python_tool_system_venv_dir: "/opt/python-tools/venvs"
 python_tool_system_version_file: "/opt/python-tools/.versions"
 
+# Development environment for importable packages
+python_dev_venv_name: "python-dev"
+python_dev_auto_activate: true # Auto-activate dev venv for interactive Python sessions
+
 python_tools: []
   # - package: "frida-tools"
   #   version: "latest"
   #   install_scope: "user"  # Optional: "user" (default) or "system". Controls where the tool is installed
   #   venv_name: "frida-tools"  # Optional: defaults to package name. Use same venv_name to install multiple packages in one venv
   #   executables: ["frida", "frida-ps", "frida-trace"]
+  #   importable: false  # Optional: if true, also install in shared dev venv for Python imports
   #   tool_dependencies:
   #     Alpine: ["npm", "git", "make", "gcc", "musl-dev"]
   # Example: System-wide installation
@@ -34,6 +39,7 @@ python_tools: []
   #   version: "latest"
   #   install_scope: "system"  # Available to all users in /usr/local/bin
   #   executables: ["black"]
+  #   importable: true  # Also available for import after activating dev venv
   # Example: Multiple packages in one venv
   # - package: "objection"
   #   version: "1.11.0"
@@ -45,3 +51,8 @@ python_tools: []
   #   venv_name: "mobile-security"
   #   install_scope: "user"
   #   executables: ["frida", "frida-ps", "frida-trace"]
+  # Example: Library-only (no executables, just importable)
+  # - package: "requests"
+  #   version: "2.31.0"
+  #   install_scope: "user"
+  #   importable: true

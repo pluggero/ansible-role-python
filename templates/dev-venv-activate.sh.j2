@@ -1,0 +1,24 @@
+#!/bin/bash
+# Activation script for Python development virtual environment
+# This script activates the shared venv containing all importable packages
+
+# Check if venv exists
+if [ ! -f "{{ python_dev_venv_path }}/bin/activate" ]; then
+    echo "Error: Development virtual environment not found at {{ python_dev_venv_path }}"
+    echo "Please ensure you have installed at least one package with 'importable: true'"
+    exit 1
+fi
+
+# Source the virtual environment
+source "{{ python_dev_venv_path }}/bin/activate"
+
+# If script is sourced, just activate. If executed, spawn a subshell.
+if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
+    # Script was executed (not sourced), spawn a subshell
+    echo "Activating Python development environment..."
+    echo "Virtual environment: {{ python_dev_venv_path }}"
+    echo "Type 'deactivate' to exit the development environment."
+    # Change to home directory if current directory doesn't exist
+    cd ~ 2>/dev/null || cd /
+    exec "${SHELL}"
+fi

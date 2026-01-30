@@ -1,0 +1,53 @@
+#!/bin/bash
+USER_DEV_VENV_PATH="{{ ansible_env.HOME | default('~') }}/.local/venvs/{{ python_dev_venv_name }}/venv"
+SYSTEM_DEV_VENV_PATH="/opt/python-tools/venvs/{{ python_dev_venv_name }}/venv"
+PYTHON_BIN="{{ python_system_python_bin }}"
+
+{% raw %}
+# Python wrapper script that auto-activates dev venv for interactive sessions
+
+# Check if no venv is already active and we're running interactively
+if [ -z "$VIRTUAL_ENV" ]; then
+    # Check if running interactively (no script file argument or using -i flag)
+    if [ $# -eq 0 ] || [[ "$*" == *"-i"* ]] || [[ "$*" == *"--interactive"* ]]; then
+        # Build list of available dev venvs
+        DEV_VENVS=()
+
+        # Check user-scoped dev venv
+        if [ -f "$USER_DEV_VENV_PATH/bin/activate" ]; then
+            DEV_VENVS+=("$USER_DEV_VENV_PATH")
+        fi
+
+        # Check system-scoped dev venv
+        if [ -f "$SYSTEM_DEV_VENV_PATH/bin/activate" ]; then
+            DEV_VENVS+=("$SYSTEM_DEV_VENV_PATH")
+        fi
+
+        # If we have at least one dev venv, set up combined PYTHONPATH
+        if [ ${#DEV_VENVS[@]} -gt 0 ]; then
+            COMBINED_PYTHONPATH=""
+
+            # Add site-packages from each dev venv to PYTHONPATH
+            for venv_path in "${DEV_VENVS[@]}"; do
+                # Find the site-packages directory (handles different Python versions)
+                site_packages=$(find "$venv_path/lib" -type d -name "site-packages" 2>/dev/null | head -n 1)
+                if [ -n "$site_packages" ]; then
+                    if [ -z "$COMBINED_PYTHONPATH" ]; then
+                        COMBINED_PYTHONPATH="$site_packages"
+                    else
+                        COMBINED_PYTHONPATH="$site_packages:$COMBINED_PYTHONPATH"
+                    fi
+                fi
+            done
+
+            # Export the combined PYTHONPATH and exec Python
+            if [ -n "$COMBINED_PYTHONPATH" ]; then
+                export PYTHONPATH="$COMBINED_PYTHONPATH${PYTHONPATH:+:$PYTHONPATH}"
+            fi
+        fi
+    fi
+fi
+
+# Execute system Python (now with PYTHONPATH set if applicable)
+exec "$PYTHON_BIN" "$@"
+{% endraw %}
