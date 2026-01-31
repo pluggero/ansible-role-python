@@ -1,0 +1,71 @@
+---
+# Setup development virtual environment for importable packages
+# This task file handles both user and system scoped dev venvs and creates a single wrapper
+
+- name: Determine if we need dev venv setup
+  ansible.builtin.set_fact:
+    python_needs_dev_venv: "{{ (python_user_has_importable_tools | default(false)) or (python_system_has_importable_tools | default(false)) }}"
+
+# Create activation scripts
+- name: Create user dev venv activation script
+  ansible.builtin.template:
+    src: dev-venv-activate.sh.j2
+    dest: "{{ python_tool_install_path }}/activate-python-dev"
+    mode: "0755"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+  vars:
+    python_dev_venv_path: "{{ python_tool_venv_dir }}/{{ python_dev_venv_name }}/venv"
+  when: python_user_has_importable_tools | default(false)
+
+- name: Create system dev venv activation script
+  ansible.builtin.template:
+    src: dev-venv-activate.sh.j2
+    dest: "{{ python_tool_system_bin }}/activate-python-dev"
+    mode: "0755"
+    owner: root
+    group: root
+  vars:
+    python_dev_venv_path: "{{ python_tool_system_venv_dir }}/{{ python_dev_venv_name }}/venv"
+  when: python_system_has_importable_tools | default(false)
+  become: true
+
+# Create Python wrapper for auto-activation (only one needed)
+- name: Detect current Python binary location
+  ansible.builtin.command: which python3
+  register: python_which_result
+  changed_when: false
+  when: python_needs_dev_venv and python_dev_auto_activate | default(true)
+
+- name: Determine actual Python binary path
+  ansible.builtin.set_fact:
+    python_actual_binary: >-
+      {%- if python_which_result.stdout == '/usr/local/bin/python3' -%}
+      {{ python_install_path }}/bin/python{{ python_version | regex_replace('^([0-9]+\.[0-9]+).*', '\1') }}
+      {%- else -%}
+      {{ python_which_result.stdout }}
+      {%- endif -%}
+  when: python_needs_dev_venv and python_dev_auto_activate | default(true)
+
+- name: Create Python wrapper for auto-activation (system scope)
+  ansible.builtin.template:
+    src: python-wrapper.sh.j2
+    dest: "{{ python_tool_system_bin }}/python3"
+    mode: "0755"
+    owner: root
+    group: root
+  vars:
+    python_dev_venv_path: "{{ python_tool_system_venv_dir }}/{{ python_dev_venv_name }}/venv"
+    python_system_python_bin: "{{ python_actual_binary }}"
+  when: python_needs_dev_venv and python_dev_auto_activate | default(true)
+  become: true
+
+- name: Create python symlink to python3 wrapper (system scope)
+  ansible.builtin.file:
+    src: "{{ python_tool_system_bin }}/python3"
+    dest: "{{ python_tool_system_bin }}/python"
+    state: link
+    owner: root
+    group: root
+  when: python_needs_dev_venv and python_dev_auto_activate | default(true)
+  become: true

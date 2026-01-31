@@ -146,3 +146,190 @@
           - "'ALL_MODULES_OK' in python_module_check.stdout"
         fail_msg: "Python modules missing or failed to import: {{ python_module_check.stdout }}"
         success_msg: "All critical Python modules are available"
+
+    # Importable packages verification
+    - name: Check user dev venv directory exists
+      ansible.builtin.stat:
+        path: "{{ python_tool_venv_dir }}/{{ python_dev_venv_name }}"
+      register: python_user_dev_venv_dir
+
+    - name: Assert user dev venv directory exists
+      ansible.builtin.assert:
+        that:
+          - python_user_dev_venv_dir.stat.exists
+          - python_user_dev_venv_dir.stat.isdir
+
+    - name: Check system dev venv directory exists
+      ansible.builtin.stat:
+        path: "{{ python_tool_system_venv_dir }}/{{ python_dev_venv_name }}"
+      register: python_system_dev_venv_dir
+
+    - name: Assert system dev venv directory exists
+      ansible.builtin.assert:
+        that:
+          - python_system_dev_venv_dir.stat.exists
+          - python_system_dev_venv_dir.stat.isdir
+
+    - name: Check user dev venv activation script exists
+      ansible.builtin.stat:
+        path: "{{ python_tool_install_path }}/activate-python-dev"
+      register: python_user_dev_activate_script
+
+    - name: Assert user dev activation script exists and is executable
+      ansible.builtin.assert:
+        that:
+          - python_user_dev_activate_script.stat.exists
+          - python_user_dev_activate_script.stat.executable
+
+    - name: Check system dev venv activation script exists
+      ansible.builtin.stat:
+        path: "{{ python_tool_system_bin }}/activate-python-dev"
+      register: python_system_dev_activate_script
+
+    - name: Assert system dev activation script exists and is executable
+      ansible.builtin.assert:
+        that:
+          - python_system_dev_activate_script.stat.exists
+          - python_system_dev_activate_script.stat.executable
+
+    - name: Verify requests package is installed in user dev venv
+      ansible.builtin.shell: |
+        . /etc/profile.d/python_path.sh
+        echo 'import requests; print(requests.__version__)' | python3
+      register: python_requests_version
+      changed_when: false
+
+    - name: Assert requests import succeeded
+      ansible.builtin.assert:
+        that:
+          - python_requests_version.rc == 0
+          - python_requests_version.stdout is match("2.31.*")
+
+    - name: Verify click package is installed in system dev venv
+      ansible.builtin.shell: |
+        . /etc/profile.d/python_path.sh
+        echo 'import click; print(click.__version__)' | python3
+      register: python_click_version
+      changed_when: false
+
+    - name: Assert click import succeeded
+      ansible.builtin.assert:
+        that:
+          - python_click_version.rc == 0
+          - python_click_version.stdout is match("8.1.*")
+
+    - name: Verify pip-tools package is installed in system dev venv
+      ansible.builtin.shell: |
+        . /etc/profile.d/python_path.sh
+        echo 'import piptools; from importlib.metadata import version; print(version("pip-tools"))' | python3
+      register: python_pip_tools_version
+      changed_when: false
+
+    - name: Assert pip-tools import succeeded
+      ansible.builtin.assert:
+        that:
+          - python_pip_tools_version.rc == 0
+          - python_pip_tools_version.stdout is match("7.3.*")
+
+    - name: Verify pytest package is installed in user dev venv
+      ansible.builtin.shell: |
+        . /etc/profile.d/python_path.sh
+        echo 'import pytest; print(pytest.__version__)' | python3
+      register: python_pytest_version
+      changed_when: false
+
+    - name: Assert pytest import succeeded
+      ansible.builtin.assert:
+        that:
+          - python_pytest_version.rc == 0
+          - python_pytest_version.stdout is match("7.4.*")
+
+    - name: Check pytest wrapper script exists (dual-purpose package)
+      ansible.builtin.stat:
+        path: "{{ python_tool_install_path }}/pytest"
+      register: python_pytest_wrapper
+
+    - name: Assert pytest wrapper exists and is executable
+      ansible.builtin.assert:
+        that:
+          - python_pytest_wrapper.stat.exists
+          - python_pytest_wrapper.stat.executable
+
+    - name: Check pip-compile wrapper script exists (dual-purpose package)
+      ansible.builtin.stat:
+        path: "{{ python_tool_system_bin }}/pip-compile"
+      register: python_pip_compile_wrapper
+
+    - name: Assert pip-compile wrapper exists and is executable
+      ansible.builtin.assert:
+        that:
+          - python_pip_compile_wrapper.stat.exists
+          - python_pip_compile_wrapper.stat.executable
+
+    # Auto-activation wrapper verification
+    - name: Check system Python wrapper exists (python3)
+      ansible.builtin.stat:
+        path: "{{ python_tool_system_bin }}/python3"
+      register: python_system_wrapper
+
+    - name: Assert system Python wrapper exists and is executable
+      ansible.builtin.assert:
+        that:
+          - python_system_wrapper.stat.exists
+          - python_system_wrapper.stat.executable
+
+    - name: Test auto-activation with wrapper (requests from user scope)
+      ansible.builtin.shell: |
+        . /etc/profile.d/python_path.sh
+        echo "import requests; print('SUCCESS')" | python3
+      register: python_auto_activate_user
+      changed_when: false
+
+    - name: Assert auto-activation works for user packages
+      ansible.builtin.assert:
+        that:
+          - python_auto_activate_user.rc == 0
+          - "'SUCCESS' in python_auto_activate_user.stdout"
+
+    - name: Test auto-activation with combined scope (both user and system packages)
+      ansible.builtin.shell: |
+        . /etc/profile.d/python_path.sh
+        echo "import requests; import click; import piptools; print('SUCCESS')" | python3
+      register: python_auto_activate_combined
+      changed_when: false
+
+    - name: Assert auto-activation works for combined user+system packages
+      ansible.builtin.assert:
+        that:
+          - python_auto_activate_combined.rc == 0
+          - "'SUCCESS' in python_auto_activate_combined.stdout"
+
+    - name: Test manual activation script (user scope)
+      ansible.builtin.shell: |
+        . {{ python_tool_install_path }}/activate-python-dev
+        python3 -c "import requests; import pytest; print('SUCCESS')"
+      register: python_manual_activate_user
+      changed_when: false
+      args:
+        executable: /bin/bash
+
+    - name: Assert manual activation works for user packages
+      ansible.builtin.assert:
+        that:
+          - python_manual_activate_user.rc == 0
+          - "'SUCCESS' in python_manual_activate_user.stdout"
+
+    - name: Test that wrapper does not interfere with scripts
+      ansible.builtin.shell: |
+        . /etc/profile.d/python_path.sh
+        echo "import sys; print('SCRIPT_RUN')" > /tmp/test_script.py
+        python3 /tmp/test_script.py
+        rm -f /tmp/test_script.py
+      register: python_wrapper_script_test
+      changed_when: false
+
+    - name: Assert wrapper allows normal script execution
+      ansible.builtin.assert:
+        that:
+          - python_wrapper_script_test.rc == 0
+          - "'SCRIPT_RUN' in python_wrapper_script_test.stdout"
