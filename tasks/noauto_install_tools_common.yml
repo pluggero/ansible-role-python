@@ -87,6 +87,46 @@
     loop_var: venv_name
   become: "{{ scope_become }}"
 
+- name: Create dev venv directory - {{ scope_name }}
+  ansible.builtin.file:
+    path: "{{ scope_venv_dir }}/{{ python_dev_venv_name }}"
+    state: directory
+    mode: "0755"
+    owner: "{{ scope_owner }}"
+    group: "{{ scope_group }}"
+  when: vars['python_' + scope_name + '_has_importable_tools']
+  become: "{{ scope_become }}"
+
+- name: Detect actual Python binary for venv creation - {{ scope_name }}
+  ansible.builtin.shell: |
+    if [ -x "/opt/python-{{ python_version }}/bin/python{{ python_version | regex_replace('^([0-9]+\.[0-9]+).*', '\1') }}" ]; then
+      echo "/opt/python-{{ python_version }}/bin/python{{ python_version | regex_replace('^([0-9]+\.[0-9]+).*', '\1') }}"
+    elif [ -x "/usr/bin/python3" ]; then
+      echo "/usr/bin/python3"
+    else
+      which python3
+    fi
+  register: python_binary_path
+  changed_when: false
+  when: vars['python_' + scope_name + '_has_importable_tools']
+
+- name: Create dev virtual environment - {{ scope_name }}
+  ansible.builtin.command:
+    cmd: "{{ python_binary_path.stdout }} -m venv {{ scope_venv_dir }}/{{ python_dev_venv_name }}/venv"
+    creates: "{{ scope_venv_dir }}/{{ python_dev_venv_name }}/venv/bin/python"
+  when: vars['python_' + scope_name + '_has_importable_tools']
+  become: "{{ scope_become }}"
+
+- name: Install importable packages in dev venv - {{ scope_name }}
+  ansible.builtin.pip:
+    name: "{{ tool.package + ('==' + tool.version if tool.version != 'latest' else '') }}"
+    state: present
+    virtualenv: "{{ scope_venv_dir }}/{{ python_dev_venv_name }}/venv"
+  loop: "{{ scope_tools | selectattr('importable', 'defined') | selectattr('importable', 'equalto', true) | list }}"
+  loop_control:
+    loop_var: tool
+  become: "{{ scope_become }}"
+
 - name: Create wrapper scripts for tool binaries - {{ scope_name }}
   ansible.builtin.template:
     src: tool-wrapper.sh.j2
@@ -94,13 +134,14 @@
     mode: "0755"
     owner: "{{ scope_owner }}"
     group: "{{ scope_group }}"
-  loop: "{{ scope_tools | subelements('executables') }}"
+  loop: "{{ scope_tools | selectattr('executables', 'defined') | subelements('executables') }}"
   loop_control:
     loop_var: tool_executable
   vars:
     tool: "{{ tool_executable[0] }}"
     executable: "{{ tool_executable[1] }}"
     venv_path: "{{ scope_venv_dir }}/{{ tool.venv_name }}/venv"
+  when: (scope_tools | selectattr('executables', 'defined') | list | length > 0)
   become: "{{ scope_become }}"
 
 - name: Update installed versions - {{ scope_name }}

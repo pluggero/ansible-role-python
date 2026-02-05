@@ -24,3 +24,29 @@ python_tools:
     version: "latest"
     install_scope: "system"
     executables: ["ansible-lint"]
+
+  # User-scoped importable packages (for Python REPL/scripts)
+  - package: "requests"
+    version: "2.31.0"
+    install_scope: "user"
+    importable: true
+
+  # System-scoped importable package
+  - package: "click"
+    version: "8.1.0"
+    install_scope: "system"
+    importable: true
+
+  # Dual-purpose: CLI tool + importable
+  - package: "pytest"
+    version: "7.4.0"
+    install_scope: "user"
+    executables: ["pytest", "py.test"]
+    importable: true
+
+  # System-scoped dual-purpose package
+  - package: "pip-tools"
+    version: "7.3.0"
+    install_scope: "system"
+    executables: ["pip-compile", "pip-sync"]
+    importable: true
