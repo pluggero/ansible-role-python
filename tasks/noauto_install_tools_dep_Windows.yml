@@ -1,0 +1,14 @@
+---
+- name: Install Python tool dependencies via Chocolatey (Windows)
+  when: python_tool_dep_pkgs is defined and python_tool_dep_pkgs | length > 0
+  block:
+    - name: Ensure Python tool dependencies are installed
+      chocolatey.chocolatey.win_chocolatey:
+        name: "{{ package }}"
+        state: present
+      loop: "{{ python_tool_dep_pkgs }}"
+      loop_control:
+        loop_var: package
+      become: true
+      become_method: ansible.builtin.runas
+      become_user: "{{ ansible_user }}"
