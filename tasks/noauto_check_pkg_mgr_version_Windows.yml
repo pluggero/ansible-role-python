@@ -1,0 +1,23 @@
+---
+- name: Get Python version from Chocolatey
+  block:
+    - name: Get Python package info from Chocolatey
+      ansible.windows.win_command:
+        cmd: "choco info {{ python_distro_pkgs[0] }} --exact --limit-output"
+      changed_when: false
+      failed_when: false
+      ignore_errors: true
+      register: python_pkg_mgr_version_cmd
+
+    - name: Extract only the version into a variable
+      ansible.builtin.set_fact:
+        python_pkg_mgr_version: >-
+          {{ (python_pkg_mgr_version_cmd.stdout_lines |
+              select('match', '^' + python_distro_pkgs[0] + '\\|.*') |
+              first |
+              split('|'))[1] | default('') }}
+      when: python_pkg_mgr_version_cmd.rc == 0
+
+    - name: Debug Python version from package manager
+      ansible.builtin.debug:
+        var: python_pkg_mgr_version

@@ -1,0 +1,30 @@
+---
+# Install Python tools with user scope (Windows)
+# These tools are installed in %LOCALAPPDATA% and added to user PATH
+
+- name: Ensure Python tool install directory exists (user - Windows)
+  ansible.windows.win_file:
+    path: "{{ python_tool_user_bin_windows }}"
+    state: directory
+
+- name: Ensure Python tool venv base directory exists (user - Windows)
+  ansible.windows.win_file:
+    path: "{{ python_tool_user_venv_dir_windows }}"
+    state: directory
+
+- name: Add Python tool path to user PATH (Windows)
+  ansible.windows.win_path:
+    elements:
+      - "{{ python_tool_user_bin_windows }}"
+    state: present
+    scope: user
+
+- name: Install user-scoped tools using common logic (Windows)
+  ansible.builtin.include_tasks: noauto_install_tools_common_Windows.yml
+  vars:
+    scope_tools: "{{ python_tools_user }}"
+    scope_venv_dir: "{{ python_tool_user_venv_dir_windows }}"
+    scope_bin_dir: "{{ python_tool_user_bin_windows }}"
+    scope_version_file: "{{ python_tool_user_version_file_windows }}"
+    scope_become: false
+    scope_name: "user"

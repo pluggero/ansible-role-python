@@ -38,10 +38,26 @@
     python_tools_user: "{{ python_tools_normalized | selectattr('install_scope', 'equalto', 'user') | list }}"
     python_tools_system: "{{ python_tools_normalized | selectattr('install_scope', 'equalto', 'system') | list }}"
 
-- name: Install user-scoped Python tools
+- name: Install user-scoped Python tools (Unix/Linux)
   ansible.builtin.include_tasks: noauto_install_tools_user.yml
-  when: python_tools_user | length > 0
+  when:
+    - python_tools_user | length > 0
+    - ansible_os_family != "Windows"
 
-- name: Install system-scoped Python tools
+- name: Install user-scoped Python tools (Windows)
+  ansible.builtin.include_tasks: noauto_install_tools_user_Windows.yml
+  when:
+    - python_tools_user | length > 0
+    - ansible_os_family == "Windows"
+
+- name: Install system-scoped Python tools (Unix/Linux)
   ansible.builtin.include_tasks: noauto_install_tools_system.yml
-  when: python_tools_system | length > 0
+  when:
+    - python_tools_system | length > 0
+    - ansible_os_family != "Windows"
+
+- name: Install system-scoped Python tools (Windows)
+  ansible.builtin.include_tasks: noauto_install_tools_system_Windows.yml
+  when:
+    - python_tools_system | length > 0
+    - ansible_os_family == "Windows"

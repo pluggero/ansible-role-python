@@ -1,3 +1,5 @@
 ---
 collections:
   - community.general
+  - ansible.windows
+  - chocolatey.chocolatey

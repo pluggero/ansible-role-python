@@ -1,0 +1,15 @@
+---
+# Internal Windows-specific variables
+# These should not be modified by users - use defaults/main.yml for user-configurable settings
+
+# Chocolatey package name for Python
+python_distro_pkgs:
+  - python
+
+# Installation arguments for official Python installer (silent install)
+python_installer_args_windows: >-
+  /quiet
+  InstallAllUsers=1
+  PrependPath=1
+  Include_test=0
+  Include_doc=0

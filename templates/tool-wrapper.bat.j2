@@ -1,0 +1,7 @@
+@echo off
+REM Auto-generated wrapper script for {{ executable }} (from package: {{ tool.package }})
+REM Install scope: {{ tool.install_scope | default('user') }}
+REM Activates venv and executes the tool with all arguments
+
+call "{{ venv_path | regex_replace('/', '\\\\') }}\Scripts\activate.bat"
+{{ executable }} %*
