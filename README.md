@@ -6,7 +6,9 @@ An Ansible Role that installs a basic configuration of Python.
 
 ## Requirements
 
-None.
+For Windows support:
+- `ansible.windows`
+- `chocolatey.chocolatey`
 
 ## Role Variables
 

@@ -1,0 +1,13 @@
+---
+- name: Install Python via Chocolatey
+  block:
+    - name: Ensure Python is installed via Chocolatey
+      chocolatey.chocolatey.win_chocolatey:
+        name: "{{ package }}"
+        state: present
+      loop: "{{ python_distro_pkgs }}"
+      loop_control:
+        loop_var: package
+      become: true
+      become_method: ansible.builtin.runas
+      become_user: "{{ ansible_user }}"

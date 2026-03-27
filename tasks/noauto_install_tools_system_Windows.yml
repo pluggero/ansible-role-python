@@ -1,0 +1,39 @@
+---
+# Install Python tools with system scope (Windows)
+# These tools are installed in C:\ProgramData and added to system PATH
+
+- name: Ensure Python tool install directory exists (system - Windows)
+  ansible.windows.win_file:
+    path: "{{ python_tool_system_bin_windows }}"
+    state: directory
+  become: true
+  become_method: ansible.builtin.runas
+  become_user: "{{ ansible_user }}"
+
+- name: Ensure Python tool venv base directory exists (system - Windows)
+  ansible.windows.win_file:
+    path: "{{ python_tool_system_venv_dir_windows }}"
+    state: directory
+  become: true
+  become_method: ansible.builtin.runas
+  become_user: "{{ ansible_user }}"
+
+- name: Add Python tool path to system PATH (Windows)
+  ansible.windows.win_path:
+    elements:
+      - "{{ python_tool_system_bin_windows }}"
+    state: present
+    scope: machine
+  become: true
+  become_method: ansible.builtin.runas
+  become_user: "{{ ansible_user }}"
+
+- name: Install system-scoped tools using common logic (Windows)
+  ansible.builtin.include_tasks: noauto_install_tools_common_Windows.yml
+  vars:
+    scope_tools: "{{ python_tools_system }}"
+    scope_venv_dir: "{{ python_tool_system_venv_dir_windows }}"
+    scope_bin_dir: "{{ python_tool_system_bin_windows }}"
+    scope_version_file: "{{ python_tool_system_version_file_windows }}"
+    scope_become: true
+    scope_name: "system"

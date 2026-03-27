@@ -1,13 +1,23 @@
 ---
 - name: Check installed Python version
   block:
-    - name: Get installed Python version
+    - name: Get installed Python version (Unix/Linux)
       ansible.builtin.command:
         cmd: "python3 --version"
       ignore_errors: true
       changed_when: false
       failed_when: false
       register: python_installed_version_cmd
+      when: ansible_os_family != "Windows"
+
+    - name: Get installed Python version (Windows)
+      ansible.windows.win_command:
+        cmd: "python --version"
+      ignore_errors: true
+      changed_when: false
+      failed_when: false
+      register: python_installed_version_cmd
+      when: ansible_os_family == "Windows"
 
     - name: Extract only the version into a variable
       ansible.builtin.set_fact:
