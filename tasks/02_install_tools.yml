@@ -38,6 +38,14 @@
     python_tools_user: "{{ python_tools_normalized | selectattr('install_scope', 'equalto', 'user') | list }}"
     python_tools_system: "{{ python_tools_normalized | selectattr('install_scope', 'equalto', 'system') | list }}"
 
+- name: Check if user tools have importable packages
+  ansible.builtin.set_fact:
+    python_user_has_importable_tools: "{{ python_tools_user | selectattr('importable', 'defined') | selectattr('importable', 'equalto', true) | list | length > 0 }}"
+
+- name: Check if system tools have importable packages
+  ansible.builtin.set_fact:
+    python_system_has_importable_tools: "{{ python_tools_system | selectattr('importable', 'defined') | selectattr('importable', 'equalto', true) | list | length > 0 }}"
+
 - name: Install user-scoped Python tools
   ansible.builtin.include_tasks: noauto_install_tools_user.yml
   when: python_tools_user | length > 0
@@ -45,3 +53,7 @@
 - name: Install system-scoped Python tools
   ansible.builtin.include_tasks: noauto_install_tools_system.yml
   when: python_tools_system | length > 0
+
+- name: Setup development virtual environment for importable packages
+  ansible.builtin.include_tasks: noauto_install_dev_venv.yml
+  when: python_tools | length > 0
