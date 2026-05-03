@@ -62,3 +62,7 @@
           ansible.windows.win_file:
             path: "{{ python_temp_dir_result.path }}"
             state: absent
+
+        - name: Set Python executable fact (Windows - source install)
+          ansible.builtin.set_fact:
+            python_executable_windows: "{{ python_install_path_windows }}\\python.exe"

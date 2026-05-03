@@ -11,3 +11,13 @@
       become: true
       become_method: ansible.builtin.runas
       become_user: "{{ ansible_user }}"
+
+    - name: Get Python executable path (Windows)
+      ansible.windows.win_command:
+        cmd: "powershell -Command \"(Get-Command python.exe -ErrorAction SilentlyContinue).Source\""
+      register: python_executable_cmd
+      changed_when: false
+
+    - name: Set Python executable fact (Windows)
+      ansible.builtin.set_fact:
+        python_executable_windows: "{{ python_executable_cmd.stdout | trim }}"

@@ -64,7 +64,7 @@
 
 - name: Create virtual environments (Windows) - {{ scope_name }}
   ansible.windows.win_command:
-    cmd: "python -m venv {{ scope_venv_dir }}\\{{ venv_name }}\\venv"
+    cmd: "{{ python_executable_windows }} -m venv {{ scope_venv_dir }}\\{{ venv_name }}\\venv"
     creates: "{{ scope_venv_dir }}\\{{ venv_name }}\\venv\\Scripts\\python.exe"
   loop: "{{ vars[scope_name + '_venvs_to_update'] }}"
   loop_control:
