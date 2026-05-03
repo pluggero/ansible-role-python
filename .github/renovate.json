@@ -1,8 +1,5 @@
 {
-  "extends": [
-    "config:best-practices",
-    ":disableRateLimiting"
-  ],
+  "extends": ["config:best-practices", ":disableRateLimiting"],
   "automerge": false,
   "automergeType": "pr",
   "packageRules": [
@@ -12,8 +9,20 @@
       "automergeType": "pr"
     },
     {
+      "matchManagers": ["custom.regex"],
+      "matchDepNames": ["python/cpython"],
+      "automerge": true,
+      "automergeType": "pr"
+    },
+    {
       "matchManagers": ["custom.regex", "ansible-galaxy"],
       "automerge": false
+    },
+    {
+      "matchManagers": ["custom.regex"],
+      "matchDepNames": ["/^pluggero\\/vagrant-.*-ansible$/"],
+      "automerge": true,
+      "automergeType": "pr"
     }
   ],
   "enabledManagers": [
@@ -22,15 +31,60 @@
     "custom.regex",
     "ansible-galaxy"
   ],
-  "ansible-galaxy": {
-    "managerFilePatterns": [
-      "/^requirements\\.ya?ml$/"
-    ]
-  },
-  "assignees": [
-    "pluggero"
-  ],
+  "assignees": ["pluggero"],
   "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/^.github/workflows/ci\\.yml$/"],
+      "matchStrings": ["VBOX_VERSION:\\s+\"(?<currentValue>[\\d\\.]+)\""],
+      "datasourceTemplate": "custom.virtualbox",
+      "depNameTemplate": "virtualbox-ci",
+      "versioningTemplate": "semver"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^.github/workflows/ci\\.yml$/",
+        "/^molecule/default/molecule\\.yml$/"
+      ],
+      "matchStrings": [
+        "molecule_distro:\\s+debian12\\s+molecule_os_family:[^\\n]+\\n\\s+molecule_box_version:\\s+\"(?<currentValue>[\\d\\.]+)\"",
+        "box_version:\\s+\"\\$\\{MOLECULE_BOX_VERSION:-(?<currentValue>[\\d\\.]+)\\}\""
+      ],
+      "datasourceTemplate": "github-tags",
+      "depNameTemplate": "pluggero/vagrant-debian12-ansible",
+      "versioningTemplate": "loose"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/^.github/workflows/ci\\.yml$/"],
+      "matchStrings": [
+        "molecule_distro:\\s+archlinux\\s+molecule_os_family:[^\\n]+\\n\\s+molecule_box_version:\\s+\"(?<currentValue>[\\d\\.]+)\""
+      ],
+      "datasourceTemplate": "github-tags",
+      "depNameTemplate": "pluggero/vagrant-archlinux-ansible",
+      "versioningTemplate": "loose"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/^.github/workflows/ci\\.yml$/"],
+      "matchStrings": [
+        "molecule_distro:\\s+alpinelinux323\\s+molecule_os_family:[^\\n]+\\n\\s+molecule_box_version:\\s+\"(?<currentValue>[\\d\\.]+)\""
+      ],
+      "datasourceTemplate": "github-tags",
+      "depNameTemplate": "pluggero/vagrant-alpinelinux323-ansible",
+      "versioningTemplate": "loose"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/^.github/workflows/ci\\.yml$/"],
+      "matchStrings": [
+        "molecule_distro:\\s+windows11\\s+molecule_os_family:[^\\n]+\\n\\s+molecule_box_version:\\s+\"(?<currentValue>[\\d\\.]+)\""
+      ],
+      "datasourceTemplate": "github-tags",
+      "depNameTemplate": "pluggero/vagrant-windows11-ansible",
+      "versioningTemplate": "loose"
+    },
     {
       "customType": "regex",
       "managerFilePatterns": [
@@ -45,5 +99,11 @@
       "depNameTemplate": "python/cpython",
       "versioningTemplate": "semver"
     }
-  ]
+  ],
+  "customDatasources": {
+    "virtualbox": {
+      "defaultRegistryUrlTemplate": "https://download.virtualbox.org/virtualbox/LATEST-STABLE.TXT",
+      "format": "plain"
+    }
+  }
 }
