@@ -215,7 +215,7 @@
         - name: Verify critical Python modules are available (Windows)
           ansible.windows.win_command:
             cmd: >-
-              python -c "
+              "{{ python_install_path_windows }}\python.exe" -c "
               import sys, importlib.util;
               modules = ['ssl', 'sqlite3', 'zlib', 'bz2', 'lzma', '_ctypes'];
               failed = [m for m in modules if not importlib.util.find_spec(m)];
