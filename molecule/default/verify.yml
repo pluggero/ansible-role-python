@@ -216,9 +216,9 @@
           ansible.windows.win_command:
             cmd: >-
               python -c "
-              import sys;
+              import sys, importlib.util;
               modules = ['ssl', 'sqlite3', 'zlib', 'bz2', 'lzma', '_ctypes'];
-              failed = [m for m in modules if not __import__('importlib').util.find_spec(m)];
+              failed = [m for m in modules if not importlib.util.find_spec(m)];
               print('FAILED_MODULES=' + ','.join(failed)) if failed else print('ALL_MODULES_OK');
               sys.exit(1 if failed else 0)
               "

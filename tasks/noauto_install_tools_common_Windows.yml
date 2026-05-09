@@ -37,8 +37,8 @@
   ansible.builtin.set_fact:
     "{{ scope_name }}_venvs_to_update": >-
       {%- set venvs_to_update = [] -%}
-      {%- set installed_versions = vars[scope_name + '_installed_versions'] -%}
-      {%- set tools_by_venv = vars[scope_name + '_tools_by_venv'] -%}
+      {%- set installed_versions = lookup('vars', scope_name + '_installed_versions') -%}
+      {%- set tools_by_venv = lookup('vars', scope_name + '_tools_by_venv') -%}
       {%- for venv_name, tools in tools_by_venv.items() -%}
         {%- for tool in tools -%}
           {%- set version_key = tool.package + '@' + tool.venv_name -%}
@@ -55,7 +55,7 @@
   ansible.windows.win_file:
     path: "{{ scope_venv_dir }}\\{{ venv_name }}"
     state: directory
-  loop: "{{ vars[scope_name + '_venvs_to_update'] }}"
+  loop: "{{ lookup('vars', scope_name + '_venvs_to_update') }}"
   loop_control:
     loop_var: venv_name
   become: "{{ scope_become }}"
@@ -64,9 +64,9 @@
 
 - name: Create virtual environments (Windows) - {{ scope_name }}
   ansible.windows.win_command:
-    cmd: "{{ python_executable_windows }} -m venv {{ scope_venv_dir }}\\{{ venv_name }}\\venv"
+    cmd: '"{{ python_executable_windows }}" -m venv "{{ scope_venv_dir }}\\{{ venv_name }}\\venv"'
     creates: "{{ scope_venv_dir }}\\{{ venv_name }}\\venv\\Scripts\\python.exe"
-  loop: "{{ vars[scope_name + '_venvs_to_update'] }}"
+  loop: "{{ lookup('vars', scope_name + '_venvs_to_update') }}"
   loop_control:
     loop_var: venv_name
   become: "{{ scope_become }}"
@@ -76,11 +76,11 @@
 - name: Install all packages for each venv (Windows) - {{ scope_name }}
   ansible.windows.win_command:
     cmd: >-
-      {{ scope_venv_dir }}\{{ venv_name }}\venv\Scripts\pip.exe install{%- set tools_by_venv = vars[scope_name + '_tools_by_venv'] -%}
+      {{ scope_venv_dir }}\{{ venv_name }}\venv\Scripts\pip.exe install{%- set tools_by_venv = lookup('vars', scope_name + '_tools_by_venv') -%}
       {%- for tool in tools_by_venv[venv_name] -%}
       {{ ' ' }}{{ tool.package }}{{ '==' + tool.version if tool.version != 'latest' else '' }}
       {%- endfor %}
-  loop: "{{ vars[scope_name + '_venvs_to_update'] }}"
+  loop: "{{ lookup('vars', scope_name + '_venvs_to_update') }}"
   loop_control:
     loop_var: venv_name
   become: "{{ scope_become }}"
@@ -104,14 +104,14 @@
 
 - name: Update installed versions (Windows) - {{ scope_name }}
   ansible.builtin.set_fact:
-    "{{ scope_name }}_installed_versions": "{{ vars[scope_name + '_installed_versions'] | combine({tool.package + '@' + tool.venv_name: tool.version}) }}"
+    "{{ scope_name }}_installed_versions": "{{ lookup('vars', scope_name + '_installed_versions') | combine({tool.package + '@' + tool.venv_name: tool.version}) }}"
   loop: "{{ scope_tools }}"
   loop_control:
     loop_var: tool
 
 - name: Update tool version file (Windows) - {{ scope_name }}
   ansible.windows.win_copy:
-    content: "{{ vars[scope_name + '_installed_versions'] | to_nice_json }}"
+    content: "{{ lookup('vars', scope_name + '_installed_versions') | to_nice_json }}"
     dest: "{{ scope_version_file }}"
   become: "{{ scope_become }}"
   become_method: "{{ 'ansible.builtin.runas' if scope_become else omit }}"

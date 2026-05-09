@@ -55,21 +55,21 @@ python_installer_name_windows: "python-{{ python_version }}-amd64.exe"
 
 # Python download directories (platform-specific)
 python_download_dir_unix: "/tmp"
-python_download_dir_windows: "C:/Windows/Temp"
+python_download_dir_windows: "C:\\Windows\\Temp"
 
 # Python installation base paths
 python_install_base_unix: "/opt"
-python_install_base_windows: "C:/Python"
-python_install_path_windows: "{{ python_install_base_windows }}/Python{{ python_version | regex_replace('\\.', '') }}"
+python_install_base_windows: "C:\\Program Files"
+python_install_path_windows: "{{ python_install_base_windows }}\\Python{{ python_version.split('.')[0] }}{{ python_version.split('.')[1] }}"
 
 # Windows tool paths - User-scoped
-python_tool_user_base_windows: "{{ ansible_env.LOCALAPPDATA }}/Programs/Python/PythonTools"
-python_tool_user_venv_dir_windows: "{{ python_tool_user_base_windows }}/venvs"
-python_tool_user_bin_windows: "{{ python_tool_user_base_windows }}/bin"
-python_tool_user_version_file_windows: "{{ python_tool_user_bin_windows }}/.versions"
+python_tool_user_base_windows: "{{ ansible_env.LOCALAPPDATA }}\\Programs\\Python\\PythonTools"
+python_tool_user_venv_dir_windows: "{{ python_tool_user_base_windows }}\\venvs"
+python_tool_user_bin_windows: "{{ python_tool_user_base_windows }}\\bin"
+python_tool_user_version_file_windows: "{{ python_tool_user_bin_windows }}\\.versions"
 
 # Windows tool paths - System-scoped
-python_tool_system_base_windows: "C:/ProgramData/PythonTools"
-python_tool_system_venv_dir_windows: "{{ python_tool_system_base_windows }}/venvs"
-python_tool_system_bin_windows: "{{ python_tool_system_base_windows }}/bin"
-python_tool_system_version_file_windows: "{{ python_tool_system_base_windows }}/.versions"
+python_tool_system_base_windows: "C:\\ProgramData\\PythonTools"
+python_tool_system_venv_dir_windows: "{{ python_tool_system_base_windows }}\\venvs"
+python_tool_system_bin_windows: "{{ python_tool_system_base_windows }}\\bin"
+python_tool_system_version_file_windows: "{{ python_tool_system_base_windows }}\\.versions"

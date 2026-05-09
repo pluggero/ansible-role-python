@@ -14,7 +14,13 @@
 
     - name: Get Python executable path (Windows)
       ansible.windows.win_command:
-        cmd: "powershell -Command \"(Get-Command python.exe -ErrorAction SilentlyContinue).Source\""
+        cmd: >-
+          powershell -Command "
+            $python = Get-Command python.exe -ErrorAction SilentlyContinue |
+              Where-Object { $_.Source -notlike '*WindowsApps*' } |
+              Select-Object -First 1;
+            if ($python) { $python.Source } else { '' }
+          "
       register: python_executable_cmd
       changed_when: false
 
