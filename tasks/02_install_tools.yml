@@ -38,10 +38,46 @@
     python_tools_user: "{{ python_tools_normalized | selectattr('install_scope', 'equalto', 'user') | list }}"
     python_tools_system: "{{ python_tools_normalized | selectattr('install_scope', 'equalto', 'system') | list }}"
 
-- name: Install user-scoped Python tools
-  ansible.builtin.include_tasks: noauto_install_tools_user.yml
-  when: python_tools_user | length > 0
+- name: Get Python executable path (Windows)
+  ansible.windows.win_command:
+    cmd: >-
+      powershell -Command "
+        $python = Get-Command python.exe -ErrorAction SilentlyContinue |
+          Where-Object { $_.Source -notlike '*WindowsApps*' } |
+          Select-Object -First 1;
+        if ($python) { $python.Source } else { '' }
+      "
+  register: python_executable_cmd
+  changed_when: false
+  when: ansible_os_family == "Windows"
 
-- name: Install system-scoped Python tools
+- name: Set Python executable fact (Windows)
+  ansible.builtin.set_fact:
+    python_executable_windows: "{{ python_executable_cmd.stdout | trim }}"
+  when:
+    - ansible_os_family == "Windows"
+    - python_executable_cmd.stdout | trim | length > 0
+
+- name: Install user-scoped Python tools (Unix/Linux)
+  ansible.builtin.include_tasks: noauto_install_tools_user.yml
+  when:
+    - python_tools_user | length > 0
+    - ansible_os_family != "Windows"
+
+- name: Install user-scoped Python tools (Windows)
+  ansible.builtin.include_tasks: noauto_install_tools_user_Windows.yml
+  when:
+    - python_tools_user | length > 0
+    - ansible_os_family == "Windows"
+
+- name: Install system-scoped Python tools (Unix/Linux)
   ansible.builtin.include_tasks: noauto_install_tools_system.yml
-  when: python_tools_system | length > 0
+  when:
+    - python_tools_system | length > 0
+    - ansible_os_family != "Windows"
+
+- name: Install system-scoped Python tools (Windows)
+  ansible.builtin.include_tasks: noauto_install_tools_system_Windows.yml
+  when:
+    - python_tools_system | length > 0
+    - ansible_os_family == "Windows"

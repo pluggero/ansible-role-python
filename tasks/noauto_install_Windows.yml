@@ -1,0 +1,29 @@
+---
+- name: Install Python via Chocolatey
+  block:
+    - name: Ensure Python is installed via Chocolatey
+      chocolatey.chocolatey.win_chocolatey:
+        name: "{{ package }}"
+        state: present
+      loop: "{{ python_distro_pkgs }}"
+      loop_control:
+        loop_var: package
+      become: true
+      become_method: ansible.builtin.runas
+      become_user: "{{ ansible_user }}"
+
+    - name: Get Python executable path (Windows)
+      ansible.windows.win_command:
+        cmd: >-
+          powershell -Command "
+            $python = Get-Command python.exe -ErrorAction SilentlyContinue |
+              Where-Object { $_.Source -notlike '*WindowsApps*' } |
+              Select-Object -First 1;
+            if ($python) { $python.Source } else { '' }
+          "
+      register: python_executable_cmd
+      changed_when: false
+
+    - name: Set Python executable fact (Windows)
+      ansible.builtin.set_fact:
+        python_executable_windows: "{{ python_executable_cmd.stdout | trim }}"

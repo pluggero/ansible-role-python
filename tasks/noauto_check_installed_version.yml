@@ -1,13 +1,39 @@
 ---
 - name: Check installed Python version
   block:
-    - name: Get installed Python version
+    - name: Get installed Python version (Unix/Linux)
       ansible.builtin.command:
         cmd: "python3 --version"
       ignore_errors: true
       changed_when: false
       failed_when: false
-      register: python_installed_version_cmd
+      register: python_installed_version_cmd_unix
+      when: ansible_os_family != "Windows"
+
+    - name: Get installed Python version (Windows)
+      ansible.windows.win_shell: |
+        $knownPath = "{{ python_install_path_windows }}\python.exe"
+        if (Test-Path $knownPath) {
+          $output = & $knownPath --version 2>&1
+          Write-Output $output
+        } else {
+          $python = Get-Command python.exe -ErrorAction SilentlyContinue |
+            Where-Object { $_.Source -notlike '*WindowsApps*' } |
+            Select-Object -First 1
+          if ($python) {
+            $output = & $python.Source --version 2>&1
+            Write-Output $output
+          }
+        }
+      ignore_errors: true
+      changed_when: false
+      failed_when: false
+      register: python_installed_version_cmd_win
+      when: ansible_os_family == "Windows"
+
+    - name: Combine version command result
+      ansible.builtin.set_fact:
+        python_installed_version_cmd: "{{ python_installed_version_cmd_unix if ansible_os_family != 'Windows' else python_installed_version_cmd_win }}"
 
     - name: Extract only the version into a variable
       ansible.builtin.set_fact:

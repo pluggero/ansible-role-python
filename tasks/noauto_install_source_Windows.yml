@@ -1,0 +1,68 @@
+---
+- name: Install Python from official installer (Windows)
+  block:
+    - name: Import installed Python version check
+      ansible.builtin.include_tasks: noauto_check_installed_version.yml
+      when: python_installed_version is not defined
+
+    - name: Force install if the version numbers do not match
+      ansible.builtin.set_fact:
+        python_force_install: true
+      when:
+        - python_installed_version is defined
+        - python_installed_version != python_version
+
+    - name: Install Python from official installer
+      when: python_installed_version is not defined or python_force_install
+      block:
+        - name: Uninstall current Python installation
+          ansible.builtin.include_tasks: noauto_uninstall_Windows.yml
+          when: python_installed_version is defined and python_installed_version != ""
+
+        - name: Create temporary directory for Python installer
+          ansible.windows.win_tempfile:
+            state: directory
+            suffix: python_install
+          register: python_temp_dir_result
+
+        - name: Download Python official installer
+          ansible.windows.win_get_url:
+            url: "{{ python_installer_url }}/{{ python_installer_name_windows }}"
+            dest: "{{ python_temp_dir_result.path }}\\{{ python_installer_name_windows }}"
+          register: python_installer_download
+
+        - name: Install Python using official installer
+          ansible.windows.win_package:
+            path: "{{ python_installer_download.dest }}"
+            arguments: "{{ python_installer_args_windows }}"
+            state: present
+            product_id: auto
+            expected_return_code: [0, 1638, 3010]
+          become: true
+          become_method: ansible.builtin.runas
+          become_user: "{{ ansible_user }}"
+
+        - name: Add Python to system PATH
+          ansible.windows.win_path:
+            elements:
+              - "{{ python_install_path_windows }}"
+              - "{{ python_install_path_windows }}\\Scripts"
+            state: present
+            scope: machine
+          become: true
+          become_method: ansible.builtin.runas
+          become_user: "{{ ansible_user }}"
+
+        - name: Remove installer file
+          ansible.windows.win_file:
+            path: "{{ python_installer_download.dest }}"
+            state: absent
+
+        - name: Remove temporary directory
+          ansible.windows.win_file:
+            path: "{{ python_temp_dir_result.path }}"
+            state: absent
+
+        - name: Set Python executable fact (Windows - source install)
+          ansible.builtin.set_fact:
+            python_executable_windows: "{{ python_install_path_windows }}\\python.exe"

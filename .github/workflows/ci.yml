@@ -45,10 +45,38 @@ jobs:
     needs: lint
     strategy:
       matrix:
-        distro:
-          - debian12
-          - archlinux
-          - alpinelinux
+        include:
+          - molecule_distro: alpinelinux323
+            molecule_os_family: "unix"
+            molecule_box_version: "2026.04.26"
+            molecule_shell: "/bin/bash"
+            molecule_memory: 4096
+          - molecule_distro: debian12
+            molecule_os_family: "unix"
+            molecule_box_version: "2026.04.26"
+            molecule_shell: "/bin/bash"
+            molecule_memory: 4096
+          - molecule_distro: archlinux
+            molecule_os_family: "unix"
+            molecule_box_version: "2026.04.26"
+            molecule_shell: "/bin/bash"
+            molecule_memory: 4096
+          # Windows: vagrant_experimental=none_communicator disables the winssh communicator
+          # of vagrant (which only checks SSH once at boot and does not wait for full system startup).
+          # vm.communicator=:none and the custom wait_for in create.yml handle
+          # SSH readiness polling instead.
+          - molecule_distro: windows11
+            molecule_os_family: "windows"
+            molecule_box_version: "2026.04.06"
+            molecule_shell: "powershell"
+            molecule_memory: 4096
+            molecule_vm_communicator: ":none"
+            vagrant_experimental: "none_communicator"
+
+    env:
+      VBOX_VERSION: "7.2.6"
+      VBOX_DEB_DISTRO: "Ubuntu"
+      VBOX_DEB_CODENAME: "noble"
 
     steps:
       - name: Check out the codebase
@@ -64,12 +92,116 @@ jobs:
       - name: Install test dependencies
         run: pip3 install -r requirements.txt
 
+      - name: Unload KVM kernel modules
+        run: |
+          echo "Unloading KVM kernel modules to avoid conflicts with VirtualBox..."
+          sudo modprobe -r kvm_intel kvm_amd kvm || true
+          lsmod | grep kvm || echo "KVM modules successfully unloaded"
+
+      - name: Get VirtualBox build ID
+        id: get-build-id
+        run: |
+          echo "Detecting VirtualBox build ID for version ${VBOX_VERSION}..."
+          BUILD_ID=$(curl -s "https://download.virtualbox.org/virtualbox/${VBOX_VERSION}/" | \
+                    grep -oP 'virtualbox-[0-9.]+_[0-9.]+-\K[0-9]+(?=~'${VBOX_DEB_DISTRO}'~'${VBOX_DEB_CODENAME}')' | \
+                    head -1)
+
+          if [ -z "$BUILD_ID" ]; then
+            echo "Error: Could not detect build ID for VirtualBox ${VBOX_VERSION}"
+            echo "Available files:"
+            curl -s "https://download.virtualbox.org/virtualbox/${VBOX_VERSION}/" | grep -o 'virtualbox-[^"]*\.deb'
+            exit 1
+          fi
+
+          echo "Detected build ID: $BUILD_ID"
+          echo "VBOX_BUILD_ID=$BUILD_ID" >> $GITHUB_ENV
+
+      - name: Construct and validate VBOX_DEB_URL
+        run: |
+          export VBOX_BRANCH="${VBOX_VERSION%.*}"
+          export VBOX_DEB_FILE="virtualbox-${VBOX_BRANCH}_${VBOX_VERSION}-${VBOX_BUILD_ID}~${VBOX_DEB_DISTRO}~${VBOX_DEB_CODENAME}_amd64.deb"
+          export VBOX_DEB_URL="https://download.virtualbox.org/virtualbox/${VBOX_VERSION}/${VBOX_DEB_FILE}"
+          echo "Constructed URL: $VBOX_DEB_URL"
+
+          # Validate that the file exists
+          if curl --output /dev/null --silent --head --fail "$VBOX_DEB_URL"; then
+            echo "VirtualBox package file confirmed to exist"
+            echo "VBOX_DEB_URL=$VBOX_DEB_URL" >> $GITHUB_ENV
+          else
+            echo "Error: VirtualBox package file does not exist at $VBOX_DEB_URL"
+            echo "Build ID $VBOX_BUILD_ID may be incorrect for this version/platform combination"
+            exit 1
+          fi
+
+      - name: Install VirtualBox
+        run: |
+          wget -O- https://www.virtualbox.org/download/oracle_vbox_2016.asc \
+            | sudo gpg --dearmor --yes --output /usr/share/keyrings/oracle-virtualbox-2016.gpg
+          echo "deb [arch=amd64 signed-by=/usr/share/keyrings/oracle-virtualbox-2016.gpg] \
+            http://download.virtualbox.org/virtualbox/debian $(lsb_release -cs) contrib" \
+            | sudo tee /etc/apt/sources.list.d/virtualbox.list
+          sudo apt update
+          sudo apt install -y linux-headers-$(uname -r) dkms
+          wget ${{ env.VBOX_DEB_URL }} -O /tmp/virtualbox.deb
+          sudo apt install -y /tmp/virtualbox.deb
+
+      - name: Verify VirtualBox installation
+        run: |
+          VBoxManage --version
+          VBoxManage list hostinfo
+
+      - name: install vagrant
+        run: |
+          wget -O- https://apt.releases.hashicorp.com/gpg \
+            | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+          echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] \
+            https://apt.releases.hashicorp.com $(lsb_release -cs) main" \
+            | sudo tee /etc/apt/sources.list.d/hashicorp.list
+          sudo apt update
+          sudo apt install -y vagrant
+
+      - name: Verify Vagrant installation
+        run: vagrant --version
+
       - name: Run Molecule tests
-        run: molecule test
+        run: |
+          max_attempts=2
+          attempt=1
+          exit_code=0
+
+          while [ $attempt -le $max_attempts ]; do
+            echo "=== Attempt $attempt of $max_attempts ==="
+
+            if molecule test; then
+              echo "✓ Molecule tests passed on attempt $attempt"
+              exit_code=0
+              break
+            else
+              exit_code=$?
+              echo "✗ Molecule tests failed on attempt $attempt with exit code $exit_code"
+
+              if [ $attempt -lt $max_attempts ]; then
+                echo "Waiting 30 seconds before retry..."
+                sleep 30
+                echo "Cleaning up before retry..."
+                molecule destroy || true
+              fi
+            fi
+
+            attempt=$((attempt + 1))
+          done
+
+          exit $exit_code
         env:
           PY_COLORS: "1"
           ANSIBLE_FORCE_COLOR: "1"
-          MOLECULE_DISTRO: ${{ matrix.distro }}
+          MOLECULE_DISTRO: ${{ matrix.molecule_distro }}
+          MOLECULE_BOX_VERSION: ${{ matrix.molecule_box_version }}
+          MOLECULE_SHELL: ${{ matrix.molecule_shell }}
+          MOLECULE_MEMORY: ${{ matrix.molecule_memory }}
+          MOLECULE_VM_COMMUNICATOR: ${{ matrix.molecule_vm_communicator }}
+          VAGRANT_EXPERIMENTAL: ${{ matrix.vagrant_experimental }}
+          MOLECULE_OS_FAMILY: ${{ matrix.molecule_os_family }}
 
   status-check:
     name: Status Check

@@ -5,7 +5,7 @@ galaxy_info:
   role_name: python
   namespace: pluggero
   author: pluggero
-  description: Installs a basic configuration of Python on various Linux distributions.
+  description: Installs a basic configuration of Python on various Linux distributions and Windows.
   company: Pluggramming
   license: license (MIT)
   min_ansible_version: "2.10"
@@ -17,6 +17,9 @@ galaxy_info:
       versions:
         - bookworm
     - name: Alpine
+      versions:
+        - all
+    - name: Windows
       versions:
         - all
 
