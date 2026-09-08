@@ -1,0 +1,4 @@
+#!/bin/sh
+# Auto-generated wrapper for the source-built Python interpreter.
+# exec avoids python/cpython#128670 (pyvenv.cfg 'home' breaks via symlink)
+exec "{{ python_install_path }}/bin/python{{ python_version | regex_replace('^([0-9]+\\.[0-9]+).*', '\\1') }}" "$@"

@@ -78,8 +78,7 @@
     cmd: >-
       {{ scope_venv_dir }}\{{ venv_name }}\venv\Scripts\pip.exe install{%- set tools_by_venv = lookup('vars', scope_name + '_tools_by_venv') -%}
       {%- for tool in tools_by_venv[venv_name] -%}
-      {{ ' ' }}{{ tool.package }}{{ '==' + tool.version if tool.version != 'latest' else '' }}
-      {%- endfor %}
+      {{ ' ' }}{{ tool.package }}{{ '==' + tool.version if tool.version != 'latest' else '' }}{%- endfor %}
   loop: "{{ lookup('vars', scope_name + '_venvs_to_update') }}"
   loop_control:
     loop_var: venv_name

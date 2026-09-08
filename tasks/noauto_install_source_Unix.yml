@@ -90,15 +90,16 @@
             creates: "{{ python_install_path }}/bin/python{{ python_version | regex_replace('^([0-9]+\\.[0-9]+).*', '\\1') }}"
           become: true
 
-        - name: Create Python symlink
-          ansible.builtin.file:
-            src: "{{ python_install_path }}/bin/python{{ python_version | regex_replace('^([0-9]+\\.[0-9]+).*', '\\1') }}"
-            dest: "/usr/local/bin/python3"
-            state: link
-            force: true
+        - name: Create Python wrapper scripts
+          ansible.builtin.template:
+            src: python-wrapper.sh.j2
+            dest: "{{ python_tool_system_bin }}/{{ wrapper_name }}"
             mode: "0755"
             owner: root
             group: root
+          loop: ["python3", "python"]
+          loop_control:
+            loop_var: wrapper_name
           become: true
 
         - name: Remove source archive

@@ -17,8 +17,11 @@
         loop_var: folder
       become: true
 
-    - name: Remove Python symlink
+    - name: Remove Python wrapper scripts
       ansible.builtin.file:
-        path: "/usr/local/bin/python3"
+        path: "{{ python_tool_system_bin }}/{{ wrapper_name }}"
         state: absent
+      loop: ["python3", "python"]
+      loop_control:
+        loop_var: wrapper_name
       become: true
