@@ -15,7 +15,7 @@
     - name: Ensure Python is installed
       ansible.builtin.apt:
         name: "{{ package }}"
-        state: present
+        state: latest
       loop: "{{ python_distro_pkgs }}"
       loop_control:
         loop_var: package
