@@ -22,3 +22,9 @@
         path: "/usr/local/bin/python3"
         state: absent
       become: true
+
+    - name: Remove python symlink (unversioned)
+      ansible.builtin.file:
+        path: "/usr/local/bin/python"
+        state: absent
+      become: true

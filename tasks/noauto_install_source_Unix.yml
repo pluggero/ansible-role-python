@@ -101,6 +101,17 @@
             group: root
           become: true
 
+        - name: Create python symlink (unversioned)
+          ansible.builtin.file:
+            src: "{{ python_install_path }}/bin/python{{ python_version | regex_replace('^([0-9]+\\.[0-9]+).*', '\\1') }}"
+            dest: "/usr/local/bin/python"
+            state: link
+            force: true
+            mode: "0755"
+            owner: root
+            group: root
+          become: true
+
         - name: Remove source archive
           ansible.builtin.file:
             path: "{{ python_download_dir }}/{{ python_archive_name }}"
