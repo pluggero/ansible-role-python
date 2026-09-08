@@ -28,7 +28,7 @@ The method used to install Python can be defined in the variable `python_install
 The following methods are available:
 
 - `source`: Installs Python from source
-  - Symlinks `python`/`python3` at `/usr/local/bin` to the pinned version, which takes priority over the distro's own Python on `PATH`.
+  - Adds `python`/`python3` wrappers at `/usr/local/bin` that `exec` the pinned version (not symlinks, to avoid [cpython#128670](https://github.com/python/cpython/issues/128670)), taking priority over the distro's Python on `PATH`.
 - `package`: Installs Python from the package manager of the distribution
   - **NOTE**: This method installs the latest version available in the package manager and not the version defined in `python_version`.
 - `dynamic`: Installs Python from package manager if available in the correct version, otherwise installs from source
