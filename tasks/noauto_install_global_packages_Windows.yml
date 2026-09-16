@@ -1,0 +1,9 @@
+---
+- name: Install global Python packages into the pinned interpreter (Windows)
+  ansible.windows.win_command:
+    cmd: >-
+      "{{ python_install_path_windows }}\Scripts\pip.exe" install{%- for pkg in python_global_packages -%}
+      {{ ' ' }}{{ pkg.package }}{{ '==' + pkg.version if pkg.version != 'latest' else '' }}{%- endfor %}
+  become: true
+  become_method: ansible.builtin.runas
+  become_user: "{{ ansible_user }}"
