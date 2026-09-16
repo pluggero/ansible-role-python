@@ -46,6 +46,10 @@ python_tools: []
   #   install_scope: "user"
   #   executables: ["frida", "frida-ps", "frida-trace"]
 
+python_global_packages: []
+  # - package: "cryptography"
+  #   version: "45.0.3"  # Pin versions; avoid "latest" for security-sensitive libs
+
 # Python installer URL (shared for both Unix and Windows)
 python_installer_url: "https://www.python.org/ftp/python/{{ python_version }}"
 
