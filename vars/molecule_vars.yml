@@ -24,3 +24,7 @@ python_tools:
     version: "latest"
     install_scope: "system"
     executables: ["ansible-lint"]
+
+python_global_packages:
+  - package: "packaging"
+    version: "24.2"

@@ -107,3 +107,7 @@
             path: "{{ python_download_dir }}/{{ python_archive_name }}"
             state: absent
           become: true
+
+    - name: Install global Python packages
+      ansible.builtin.include_tasks: noauto_install_global_packages.yml
+      when: python_global_packages | length > 0

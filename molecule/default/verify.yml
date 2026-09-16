@@ -145,6 +145,17 @@
             fail_msg: "Python modules missing or failed to import: {{ python_module_check.stdout }}"
             success_msg: "All critical Python modules are available"
 
+        - name: Verify global package is importable via the pinned interpreter
+          ansible.builtin.command:
+            cmd: python3 -c "import packaging"
+          register: python_global_package_check
+          changed_when: false
+
+        - name: Assert global package import succeeded
+          ansible.builtin.assert:
+            that:
+              - python_global_package_check.rc == 0
+
         - name: Create a scratch venv via the installed python
           ansible.builtin.command:
             cmd: "python -m venv /tmp/molecule_verify_venv"
@@ -256,3 +267,14 @@
               - "'ALL_MODULES_OK' in python_module_check_win.stdout"
             fail_msg: "Python modules missing or failed to import: {{ python_module_check_win.stdout }}"
             success_msg: "All critical Python modules are available"
+
+        - name: Verify global package is importable via the pinned interpreter (Windows)
+          ansible.windows.win_command:
+            cmd: '"{{ python_install_path_windows }}\python.exe" -c "import packaging"'
+          register: python_global_package_check_win
+          changed_when: false
+
+        - name: Assert global package import succeeded (Windows)
+          ansible.builtin.assert:
+            that:
+              - python_global_package_check_win.rc == 0
