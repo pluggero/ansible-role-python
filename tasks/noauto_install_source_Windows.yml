@@ -66,3 +66,7 @@
         - name: Set Python executable fact (Windows - source install)
           ansible.builtin.set_fact:
             python_executable_windows: "{{ python_install_path_windows }}\\python.exe"
+
+    - name: Install global Python packages (Windows)
+      ansible.builtin.include_tasks: noauto_install_global_packages_Windows.yml
+      when: python_global_packages | length > 0

@@ -103,6 +103,14 @@ In this example, both `objection==1.11.0` and `frida-tools==13.7.1` will be inst
 
 **Note:** System-scoped tools require the playbook to run with `become: true` (sudo privileges).
 
+```yaml
+python_global_packages: []
+  # - package: "cryptography"
+  #   version: "45.0.3"
+```
+
+Optional list of packages installed directly into the pinned interpreter (no venv) — use when a script's `#!/usr/bin/env python` needs a module globally importable. Requires `package`, `version` (pin it). Only applies to `source`-built installs; for `package`-method installs, use your OS package manager instead.
+
 ## Dependencies
 
 None.
