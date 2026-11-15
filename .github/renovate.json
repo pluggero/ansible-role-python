@@ -6,13 +6,19 @@
     {
       "matchManagers": ["github-actions", "pip_requirements"],
       "automerge": true,
-      "automergeType": "pr"
+      "automergeType": "pr",
+      "minimumReleaseAge": "7 days"
     },
     {
       "matchManagers": ["custom.regex"],
       "matchDepNames": ["python/cpython"],
       "automerge": true,
-      "automergeType": "pr"
+      "automergeType": "pr",
+      "minimumReleaseAge": "7 days"
+    },
+    {
+      "matchDatasources": ["github-runners"],
+      "automerge": false
     },
     {
       "matchManagers": ["custom.regex", "ansible-galaxy"],
@@ -22,7 +28,8 @@
       "matchManagers": ["custom.regex"],
       "matchDepNames": ["/^pluggero\\/vagrant-.*-ansible$/"],
       "automerge": true,
-      "automergeType": "pr"
+      "automergeType": "pr",
+      "minimumReleaseAge": "7 days"
     }
   ],
   "enabledManagers": [
@@ -32,6 +39,12 @@
     "ansible-galaxy"
   ],
   "assignees": ["pluggero"],
+  "osvVulnerabilityAlerts": true,
+  "vulnerabilityAlerts": {
+    "minimumReleaseAge": null,
+    "automerge": false,
+    "labels": ["security"]
+  },
   "customManagers": [
     {
       "customType": "regex",
@@ -89,10 +102,12 @@
       "customType": "regex",
       "managerFilePatterns": [
         "/^defaults/main\\.yml$/",
-        "\\.github/workflows/.+\\.ya?ml$"
+        "/^meta/argument_specs\\.yml$/",
+        "/^\\.github/workflows/.+\\.ya?ml$/"
       ],
       "matchStrings": [
         "python_version:\\s+\"(?<currentValue>[\\d\\.]+)\"",
+        "# renovate: datasource=github-tags depName=python/cpython\\s+default:\\s+\"(?<currentValue>[\\d\\.]+)\"",
         "python-version:\\s+[\"'](?<currentValue>\\d+\\.\\d+)[\"']"
       ],
       "datasourceTemplate": "github-tags",

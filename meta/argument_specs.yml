@@ -1,0 +1,161 @@
+---
+# No Jinja here: the spec is templated at runtime.
+argument_specs:
+  main:
+    short_description: Installs Python and optional Python-based CLI tools.
+    description:
+      - Installs Python on ArchLinux, Debian, Alpine and Windows, either from the distribution
+        package manager, from source, or dynamically (package if the version matches, otherwise source).
+      - Optionally installs Python CLI tools into isolated virtual environments, per user or system-wide.
+    author: pluggero
+    options:
+      python_version:
+        type: str
+        description: Python version to install (used for source installs and the Windows installer).
+        # renovate: datasource=github-tags depName=python/cpython
+        default: "3.14.3"
+      python_install_method:
+        type: str
+        description: How Python is installed on Unix hosts.
+        choices:
+          - dynamic
+          - package
+          - source
+        default: dynamic
+      python_force_install:
+        type: bool
+        description: Force (re)installation even if the requested version is already installed.
+        default: false
+
+      python_archive_name:
+        type: str
+        description: Name of the source archive to download.
+      python_download_url:
+        type: str
+        description: URL of the source archive.
+      python_download_dir:
+        type: str
+        description: Directory the source archive is downloaded to.
+        default: /tmp
+      python_install_dir:
+        type: str
+        description: Base directory for source installations.
+        default: /opt
+      python_install_path:
+        type: str
+        description: Installation path for a source-built Python.
+
+      python_tool_install_dir:
+        type: str
+        description: User-scoped tool bin directory, relative to the user's home.
+        default: .local/bin
+      python_tool_install_path:
+        type: str
+        description: Absolute user-scoped tool bin directory.
+      python_tool_venv_dir:
+        type: str
+        description: Directory holding user-scoped tool virtual environments.
+      python_tool_version_file_path:
+        type: str
+        description: File tracking installed user-scoped tool versions.
+      python_tool_system_bin:
+        type: str
+        description: System-wide tool bin directory.
+        default: /usr/local/bin
+      python_tool_system_venv_dir:
+        type: str
+        description: Directory holding system-wide tool virtual environments.
+        default: /opt/python-tools/venvs
+      python_tool_system_version_file:
+        type: str
+        description: File tracking installed system-wide tool versions.
+        default: /opt/python-tools/.versions
+
+      python_tools:
+        type: list
+        elements: dict
+        description: Python CLI tools to install into virtual environments.
+        default: []
+        options:
+          package:
+            type: str
+            required: true
+            description: PyPI package name.
+          version:
+            type: str
+            description: Package version to install, or C(latest).
+            default: latest
+          install_scope:
+            type: str
+            description: Install for the connecting user or system-wide.
+            choices:
+              - user
+              - system
+            default: user
+          venv_name:
+            type: str
+            description:
+              - Virtual environment name. Defaults to the package name.
+              - Tools sharing a C(venv_name) are installed into the same virtual environment.
+          executables:
+            type: list
+            elements: str
+            description: Executables from the venv to expose in the tool bin directory.
+          tool_dependencies:
+            type: dict
+            description: System packages required by the tool, keyed by OS family (e.g. C(Alpine), C(Debian)).
+
+      python_installer_url:
+        type: str
+        description: Base URL for Python installers (Unix and Windows).
+      python_installer_name_unix:
+        type: str
+        description: Source archive name on Unix.
+      python_installer_name_windows:
+        type: str
+        description: Installer executable name on Windows.
+      python_download_dir_unix:
+        type: str
+        description: Download directory on Unix.
+        default: /tmp
+      python_download_dir_windows:
+        type: str
+        description: Download directory on Windows.
+        default: C:\Windows\Temp
+      python_install_base_unix:
+        type: str
+        description: Installation base directory on Unix.
+        default: /opt
+      python_install_base_windows:
+        type: str
+        description: Installation base directory on Windows.
+        default: C:\Program Files
+      python_install_path_windows:
+        type: str
+        description: Python installation path on Windows.
+
+      python_tool_user_base_windows:
+        type: str
+        description: Base directory for user-scoped tools on Windows.
+      python_tool_user_venv_dir_windows:
+        type: str
+        description: User-scoped tool virtual environments directory on Windows.
+      python_tool_user_bin_windows:
+        type: str
+        description: User-scoped tool bin directory on Windows.
+      python_tool_user_version_file_windows:
+        type: str
+        description: File tracking installed user-scoped tool versions on Windows.
+      python_tool_system_base_windows:
+        type: str
+        description: Base directory for system-wide tools on Windows.
+        default: C:\ProgramData\PythonTools
+      python_tool_system_venv_dir_windows:
+        type: str
+        description: System-wide tool virtual environments directory on Windows.
+      python_tool_system_bin_windows:
+        type: str
+        description: System-wide tool bin directory on Windows.
+      python_tool_system_version_file_windows:
+        type: str
+        description: File tracking installed system-wide tool versions on Windows.
