@@ -26,6 +26,12 @@ argument_specs:
         type: bool
         description: Force (re)installation even if the requested version is already installed.
         default: false
+      python_remove_build_pkgs:
+        type: bool
+        description: >-
+          After a source build, remove only the build-only packages that this role's own run
+          installed (pre-existing packages are left untouched).
+        default: true
 
       python_archive_name:
         type: str

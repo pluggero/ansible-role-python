@@ -2,6 +2,7 @@
 python_version: "3.14.3"
 python_install_method: "dynamic"
 python_force_install: false
+python_remove_build_pkgs: true
 
 python_archive_name: "Python-{{ python_version }}.tgz"
 python_download_url: "https://www.python.org/ftp/python/{{ python_version }}/{{ python_archive_name }}"
