@@ -19,6 +19,26 @@
           ansible.builtin.include_tasks: noauto_uninstall.yml
           when: python_installed_version is defined and python_installed_version != ""
 
+        - name: Gather installed packages
+          ansible.builtin.package_facts:
+            manager: auto
+
+        - name: Determine build packages not yet installed
+          ansible.builtin.set_fact:
+            python_build_pkgs_to_remove: "{{ python_build_pkgs | default([]) | reject('in', ansible_facts.packages) | list }}"
+
+        - name: Install OS-specific build packages
+          ansible.builtin.include_tasks: "{{ task_file }}"
+          with_first_found:
+            - "{{ role_path }}/tasks/noauto_install_build_{{ ansible_distribution }}-{{ ansible_distribution_major_version }}.yml"
+            - "{{ role_path }}/tasks/noauto_install_build_{{ ansible_os_family }}-{{ ansible_distribution_major_version }}.yml"
+            - "{{ role_path }}/tasks/noauto_install_build_{{ ansible_distribution }}.yml"
+            - "{{ role_path }}/tasks/noauto_install_build_{{ ansible_os_family }}.yml"
+            - "{{ role_path }}/tasks/noauto_install_build_{{ ansible_lsb.id }}.yml"
+          loop_control:
+            loop_var: task_file
+          when: python_build_pkgs is defined and python_build_pkgs | length > 0
+
         - name: Download Python source
           ansible.builtin.get_url:
             url: "{{ python_download_url }}"
@@ -107,3 +127,17 @@
             path: "{{ python_download_dir }}/{{ python_archive_name }}"
             state: absent
           become: true
+
+        - name: Remove OS-specific build packages
+          ansible.builtin.include_tasks: "{{ task_file }}"
+          with_first_found:
+            - "{{ role_path }}/tasks/noauto_uninstall_build_{{ ansible_distribution }}-{{ ansible_distribution_major_version }}.yml"
+            - "{{ role_path }}/tasks/noauto_uninstall_build_{{ ansible_os_family }}-{{ ansible_distribution_major_version }}.yml"
+            - "{{ role_path }}/tasks/noauto_uninstall_build_{{ ansible_distribution }}.yml"
+            - "{{ role_path }}/tasks/noauto_uninstall_build_{{ ansible_os_family }}.yml"
+            - "{{ role_path }}/tasks/noauto_uninstall_build_{{ ansible_lsb.id }}.yml"
+          loop_control:
+            loop_var: task_file
+          when:
+            - python_remove_build_pkgs | default(true)
+            - python_build_pkgs_to_remove | default([]) | length > 0

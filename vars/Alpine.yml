@@ -3,6 +3,12 @@ python_dep_pkgs:
   - tar
   - unzip
   - curl
+  - xz
+  - py3-pip
+  - py3-setuptools
+  - py3-wheel
+
+python_build_pkgs:
   - build-base
   - openssl-dev
   - libffi-dev
@@ -10,13 +16,9 @@ python_dep_pkgs:
   - readline-dev
   - zlib-dev
   - bzip2-dev
-  - xz
   - xz-dev
   - gdbm-dev
   - ncurses-dev
-  - py3-pip
-  - py3-setuptools
-  - py3-wheel
 
 python_distro_pkgs:
   - python3

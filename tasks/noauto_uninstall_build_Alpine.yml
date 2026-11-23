@@ -1,0 +1,22 @@
+---
+- name: Ensure we are using apk
+  ansible.builtin.fail:
+    msg: "This role only supports {{ ansible_os_family }} systems that use apk as a package manager."
+  when: ansible_pkg_mgr != "apk"
+
+- name: Remove Python build dependencies via apk
+  block:
+    - name: Update apk cache
+      community.general.apk:
+        update_cache: true
+      changed_when: false # The apk module currently does not support cache_valid_time.
+      become: true
+
+    - name: Ensure Python build pkgs are removed
+      community.general.apk:
+        name: "{{ package }}"
+        state: absent
+      loop: "{{ python_build_pkgs_to_remove }}"
+      loop_control:
+        loop_var: package
+      become: true
