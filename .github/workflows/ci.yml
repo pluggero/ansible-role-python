@@ -203,6 +203,8 @@ jobs:
           MOLECULE_VM_COMMUNICATOR: ${{ matrix.molecule_vm_communicator }}
           VAGRANT_EXPERIMENTAL: ${{ matrix.vagrant_experimental }}
           MOLECULE_OS_FAMILY: ${{ matrix.molecule_os_family }}
+          VAGRANT_BOX_S3_BUCKET: ${{ vars.VAGRANT_BOX_S3_BUCKET }}
+          VAGRANT_BOX_S3_ENDPOINT: ${{ vars.VAGRANT_BOX_S3_ENDPOINT }}
 
   status-check:
     name: Status Check
