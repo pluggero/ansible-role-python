@@ -63,7 +63,7 @@ python_install_base_windows: "C:\\Program Files"
 python_install_path_windows: "{{ python_install_base_windows }}\\Python{{ python_version.split('.')[0] }}{{ python_version.split('.')[1] }}"
 
 # Windows tool paths - User-scoped
-python_tool_user_base_windows: "{{ ansible_env.LOCALAPPDATA }}\\Programs\\Python\\PythonTools"
+python_tool_user_base_windows: "{{ ansible_env['LOCALAPPDATA'] | default('') }}\\Programs\\Python\\PythonTools"
 python_tool_user_venv_dir_windows: "{{ python_tool_user_base_windows }}\\venvs"
 python_tool_user_bin_windows: "{{ python_tool_user_base_windows }}\\bin"
 python_tool_user_version_file_windows: "{{ python_tool_user_bin_windows }}\\.versions"
