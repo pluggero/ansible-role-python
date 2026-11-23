@@ -15,6 +15,10 @@
       "automergeType": "pr"
     },
     {
+      "matchDatasources": ["github-runners"],
+      "automerge": false
+    },
+    {
       "matchManagers": ["custom.regex", "ansible-galaxy"],
       "automerge": false
     },
